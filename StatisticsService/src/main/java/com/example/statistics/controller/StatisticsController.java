@@ -14,6 +14,10 @@ public class StatisticsController {
     @GetMapping("/topTracks")
     public List<String> getTopTracks() {
         // Implement the logic to get the top tracks
-        return new ArrayList<>();
+        List<String> topTracks = new ArrayList<>();
+        topTracks.add("Track A");
+        topTracks.add("Track B");
+        topTracks.add("Track C");
+        return topTracks;
     }
 }
