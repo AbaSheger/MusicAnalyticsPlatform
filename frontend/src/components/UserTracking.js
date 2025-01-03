@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Alert } from 'react-bootstrap';
 
 function UserTracking() {
   const [playback, setPlayback] = useState('');
   const [search, setSearch] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const logPlayback = () => {
     axios.post('/user-tracking/logPlayback', { playback })
       .then(response => {
         console.log('Playback logged:', response.data);
+        setSuccessMessage('Playback logged successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
       })
       .catch(error => {
         console.error('There was an error logging the playback!', error);
@@ -19,6 +23,8 @@ function UserTracking() {
     axios.post('/user-tracking/logSearch', { search })
       .then(response => {
         console.log('Search logged:', response.data);
+        setSuccessMessage('Search logged successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
       })
       .catch(error => {
         console.error('There was an error logging the search!', error);
@@ -26,8 +32,9 @@ function UserTracking() {
   };
 
   return (
-    <div>
+    <div className="user-tracking">
       <h2>User Tracking</h2>
+      {successMessage && <Alert variant="success">{successMessage}</Alert>}
       <div>
         <input
           type="text"
