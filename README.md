@@ -132,3 +132,83 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 ## License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt) file for details.
 
+## Detailed Setup Instructions
+
+### Building and Running the Microservices
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/AbaSheger/MusicAnalyticsPlatform.git
+   cd MusicAnalyticsPlatform
+   ```
+
+2. **Build the project using Maven**:
+   ```bash
+   mvn clean install
+   ```
+
+3. **Navigate to each microservice directory and build Docker images**:
+   ```bash
+   cd UserTrackingService
+   docker build -t user-tracking-service .
+   cd ../RecommendationService
+   docker build -t recommendation-service .
+   cd ../StatisticsService
+   docker build -t statistics-service .
+   cd ../api-gateway
+   docker build -t api-gateway .
+   cd ../eureka-server
+   docker build -t eureka-server .
+   ```
+
+4. **Run the Docker containers**:
+   ```bash
+   docker-compose up
+   ```
+
+### Setting Up Docker and Kubernetes
+
+1. **Install Docker**:
+   Follow the instructions on the [Docker website](https://docs.docker.com/get-docker/) to install Docker on your machine.
+
+2. **Install Kubernetes**:
+   Follow the instructions on the [Kubernetes website](https://kubernetes.io/docs/setup/) to install Kubernetes. You can use Minikube for a local setup.
+
+3. **Deploy the microservices to Kubernetes**:
+   Create Kubernetes deployment and service files for each microservice and apply them using `kubectl`:
+   ```bash
+   kubectl apply -f user-tracking-service-deployment.yaml
+   kubectl apply -f recommendation-service-deployment.yaml
+   kubectl apply -f statistics-service-deployment.yaml
+   kubectl apply -f api-gateway-deployment.yaml
+   kubectl apply -f eureka-server-deployment.yaml
+   ```
+
+### API Gateway and Eureka Server Configuration
+
+1. **API Gateway Configuration**:
+   The API Gateway is configured using Spring Cloud Gateway. The routes for the microservices are defined in the `application.yml` file located in the `api-gateway/src/main/resources` directory.
+
+2. **Eureka Server Configuration**:
+   The Eureka Server is configured using the `application.yml` file located in the `eureka-server/src/main/resources` directory. The Eureka Server registers each microservice and enables service discovery.
+
+3. **Running the API Gateway and Eureka Server**:
+   Start the API Gateway and Eureka Server using Docker or Kubernetes as described in the previous sections.
+
+4. **Accessing the Microservices**:
+   Use the API Gateway to access the microservices. The API Gateway routes requests to the appropriate microservice based on the configured routes.
+
+## Verifying the Setup
+
+1. **Run Integration Tests**:
+   Ensure that all microservices communicate correctly by running integration tests. Use tools like Postman or any API client to send requests to the microservices and verify the responses.
+
+2. **Check API Documentation**:
+   Each microservice should have proper endpoints documented with Swagger. Access the Swagger UI for each microservice to view the API documentation.
+
+3. **Monitor the Services**:
+   Use Spring Boot Actuator to monitor the health and metrics of each microservice. Access the Actuator endpoints to view the status and metrics of the services.
+
+## Conclusion
+
+By following these detailed setup instructions, you should be able to build, run, and deploy the Music Analytics Platform microservices using Docker and Kubernetes. The API Gateway and Eureka Server configuration ensures proper routing and service discovery, enabling seamless communication between the microservices. Verify the setup by running integration tests and checking the API documentation to ensure everything is working as expected.
