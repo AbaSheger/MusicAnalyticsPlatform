@@ -1,0 +1,122 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+}
+
+header, footer {
+  background-color: #343a40;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+
+nav {
+  background-color: #007bff;
+  padding: 1rem;
+}
+
+nav a {
+  color: white;
+  margin: 0 1rem;
+  text-decoration: none;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+main {
+  padding: 2rem;
+}
+
+/* Recommendation Component Styles */
+.recommendation {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.recommendation h2 {
+  margin-top: 0;
+}
+
+.recommendation ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.recommendation li {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* Statistics Component Styles */
+.statistics {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.statistics h2 {
+  margin-top: 0;
+}
+
+.statistics ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.statistics li {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* User Tracking Component Styles */
+.user-tracking {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-tracking h2 {
+  margin-top: 0;
+}
+
+.user-tracking div {
+  margin-bottom: 1rem;
+}
+
+.user-tracking input {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  width: calc(100% - 1rem);
+}
+
+.user-tracking button {
+  background-color: #007bff;
+  border: none;
+  border-radius: 0.25rem;
+  color: white;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.user-tracking button:hover {
+  background-color: #0056b3;
+}
