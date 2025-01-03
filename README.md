@@ -231,12 +231,17 @@ By following these detailed setup instructions, you should be able to build, run
    npm install
    ```
 
-3. **Start the development server**:
+3. **Ensure the `index.html` file is in the `public` directory**:
+   ```bash
+   mv src/index.html public/index.html
+   ```
+
+4. **Start the development server**:
    ```bash
    npm start
    ```
 
-4. **Open your browser and navigate to**:
+5. **Open your browser and navigate to**:
    ```
    http://localhost:3000
    ```
