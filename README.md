@@ -212,3 +212,33 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt)
 ## Conclusion
 
 By following these detailed setup instructions, you should be able to build, run, and deploy the Music Analytics Platform microservices using Docker and Kubernetes. The API Gateway and Eureka Server configuration ensures proper routing and service discovery, enabling seamless communication between the microservices. Verify the setup by running integration tests and checking the API documentation to ensure everything is working as expected.
+
+## Frontend Setup Instructions
+
+### Requirements
+- **Node.js** (v14 or higher)
+- **npm** (v6 or higher)
+
+### Build and Run
+
+1. **Navigate to the `frontend` directory**:
+   ```bash
+   cd frontend
+   ```
+
+2. **Install the dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**:
+   ```bash
+   npm start
+   ```
+
+4. **Open your browser and navigate to**:
+   ```
+   http://localhost:3000
+   ```
+
+The frontend application should now be running and able to interact with the backend services.
