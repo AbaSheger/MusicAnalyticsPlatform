@@ -50,6 +50,7 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
 - Aggregate playback data for analytics.
 - Scalable microservice architecture.
 - Centralized API gateway and service discovery.
+- AI-based recommendation algorithm for personalized music recommendations.
 
 ## Setup Instructions
 
@@ -86,6 +87,7 @@ Provides personalized music recommendations based on user activity.
 
 Endpoints:
 - GET /getRecommendations/{userId}
+- GET /getAIRecommendations/{userId}
 
 ### StatisticsService
 Aggregates data like the top 10 most-played tracks.
@@ -124,6 +126,7 @@ Use Postman or any API client to interact with the microservices.
 Example requests:
 - Log a playback activity: `POST /logPlayback`
 - Get personalized recommendations: `GET /getRecommendations/{userId}`
+- Get AI-generated recommendations: `GET /getAIRecommendations/{userId}`
 - Retrieve top tracks: `GET /topTracks`
 
 ## Contributing
