@@ -55,7 +55,7 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
 ## Setup Instructions
 
 ### Requirements
-- **Java 11+**
+- **Java 21**
 - **Maven**
 - **Docker**
 - **Kubernetes** (Minikube or other local setup)
@@ -66,11 +66,13 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
 1. **Navigate to the project directory and build the modules using Maven**:
    ```bash
    mvn clean install
+   ```
 
 2. ** Use Docker to build and run each microservice:**
    ```bash
    docker-compose up
-   
+   ```
+
 3. ** Optionally, use Kubernetes (Minikube or similar) to manage the deployment if desired.**
 
 ## Microservices Overview
@@ -94,6 +96,12 @@ Aggregates data like the top 10 most-played tracks.
 
 Endpoints:
 - GET /topTracks
+
+### EurekaServerApplication
+Handles service registration and discovery.
+
+### ApiGatewayApplication
+Routes requests to the appropriate microservices.
 
 ## Multi-Module Project Setup
 
@@ -234,17 +242,12 @@ By following these detailed setup instructions, you should be able to build, run
    npm install
    ```
 
-3. **Ensure the `index.html` file is in the `public` directory**:
-   ```bash
-   mv src/index.html public/index.html
-   ```
-
-4. **Start the development server**:
+3. **Start the development server**:
    ```bash
    npm start
    ```
 
-5. **Open your browser and navigate to**:
+4. **Open your browser and navigate to**:
    ```
    http://localhost:3000
    ```
