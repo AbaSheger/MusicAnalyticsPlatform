@@ -75,6 +75,19 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
 
 3. ** Optionally, use Kubernetes (Minikube or similar) to manage the deployment if desired.**
 
+### GitHub Actions Workflow
+
+In the GitHub Actions workflow configuration file `.github/workflows/ci.yml`, ensure that the `distribution` parameter is specified under the `setup-java` step with the value `temurin`. This is required for the `actions/setup-java` step to function correctly.
+
+Example configuration:
+```yaml
+- name: Set up JDK 21
+  uses: actions/setup-java@v2
+  with:
+    java-version: 21
+    distribution: 'temurin'
+```
+
 ## Microservices Overview
 
 ### UserTrackingService
