@@ -7,20 +7,20 @@ function Recommendation() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/recommendation/getRecommendations/1')
+    axios.get('/recommendation/getAIRecommendations/1')
       .then(response => {
         setRecommendations(response.data);
         setLoading(false);
       })
       .catch(error => {
-        console.error('There was an error fetching the recommendations!', error);
+        console.error('There was an error fetching the AI-generated recommendations!', error);
         setLoading(false);
       });
   }, []);
 
   return (
     <div className="recommendation">
-      <h2>Recommendations</h2>
+      <h2>AI-Generated Recommendations</h2>
       {loading ? (
         <Spinner animation="border" role="status">
           <span className="sr-only">Loading...</span>
