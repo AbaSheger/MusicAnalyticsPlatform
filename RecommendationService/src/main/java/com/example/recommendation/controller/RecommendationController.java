@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -13,6 +14,9 @@ import java.util.HashMap;
 @RestController
 @RequestMapping("/recommendation")
 public class RecommendationController {
+
+    private static final String LAST_FM_API_KEY = "YOUR_LAST_FM_API_KEY";
+    private static final String LAST_FM_API_URL = "http://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user=%s&api_key=" + LAST_FM_API_KEY + "&format=json";
 
     @GetMapping("/getRecommendations/{userId}")
     public List<String> getRecommendations(@PathVariable String userId) {
@@ -58,6 +62,26 @@ public class RecommendationController {
             }
         }
         
+        return recommendations;
+    }
+
+    @GetMapping("/getAIRecommendations/{userId}")
+    public List<String> getAIRecommendations(@PathVariable String userId) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = String.format(LAST_FM_API_URL, userId);
+        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+
+        List<String> recommendations = new ArrayList<>();
+        if (response != null && response.containsKey("toptracks")) {
+            Map<String, Object> topTracks = (Map<String, Object>) response.get("toptracks");
+            if (topTracks.containsKey("track")) {
+                List<Map<String, Object>> tracks = (List<Map<String, Object>>) topTracks.get("track");
+                for (Map<String, Object> track : tracks) {
+                    recommendations.add((String) track.get("name"));
+                }
+            }
+        }
+
         return recommendations;
     }
 }
