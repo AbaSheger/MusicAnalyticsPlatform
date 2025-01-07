@@ -24,15 +24,18 @@ jobs:
 
     - name: Build with Maven
       run: mvn clean install
+      working-directory: .
 
     - name: Build Docker images
       run: docker-compose build
 
     - name: Run unit tests
       run: mvn test
+      working-directory: .
 
     - name: Run integration tests
       run: mvn verify
+      working-directory: .
 
     - name: Deploy to Kubernetes
       run: |
