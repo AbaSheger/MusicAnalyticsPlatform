@@ -253,3 +253,92 @@ By following these detailed setup instructions, you should be able to build, run
    ```
 
 The frontend application should now be running and able to interact with the backend services.
+
+## Detailed Examples and Use Cases
+
+### Example 1: Logging User Playback and Search Activities
+
+1. **Log a playback activity**:
+   ```bash
+   curl -X POST http://localhost:8081/user-tracking/logPlayback -H "Content-Type: application/json" -d '{"playback": "Track A"}'
+   ```
+
+2. **Log a search activity**:
+   ```bash
+   curl -X POST http://localhost:8081/user-tracking/logSearch -H "Content-Type: application/json" -d '{"search": "Artist X"}'
+   ```
+
+### Example 2: Getting Personalized Recommendations
+
+1. **Get personalized recommendations for a user**:
+   ```bash
+   curl -X GET http://localhost:8082/recommendation/getRecommendations/1
+   ```
+
+2. **Get AI-generated recommendations for a user**:
+   ```bash
+   curl -X GET http://localhost:8082/recommendation/getAIRecommendations/1
+   ```
+
+### Example 3: Retrieving Top Tracks
+
+1. **Get the top tracks**:
+   ```bash
+   curl -X GET http://localhost:8083/statistics/topTracks
+   ```
+
+## Microservices Interactions and Data Flow
+
+### UserTrackingService
+
+- **Logs user activities**: The UserTrackingService logs user activities such as playbacks and searches. These logs are stored in a database for further analysis.
+
+### RecommendationService
+
+- **Generates personalized recommendations**: The RecommendationService retrieves user activity data from the UserTrackingService and uses an AI-based algorithm to generate personalized music recommendations.
+
+### StatisticsService
+
+- **Aggregates playback data**: The StatisticsService retrieves playback data from the UserTrackingService and aggregates it to provide insights such as the top 10 most-played tracks.
+
+### Data Flow
+
+1. **User Activity Logging**: The UserTrackingService logs user activities such as playbacks and searches.
+2. **Recommendation Generation**: The RecommendationService retrieves user activity data from the UserTrackingService and generates personalized recommendations.
+3. **Data Aggregation**: The StatisticsService retrieves playback data from the UserTrackingService and aggregates it to provide insights.
+
+## User Interface Screenshots
+
+### Home Page
+
+![Home Page](screenshots/home_page.png)
+
+### Recommendations Page
+
+![Recommendations Page](screenshots/recommendations_page.png)
+
+### Statistics Page
+
+![Statistics Page](screenshots/statistics_page.png)
+
+### User Tracking Page
+
+![User Tracking Page](screenshots/user_tracking_page.png)
+
+## Demo Videos
+
+### Home Page Demo
+
+[![Home Page Demo](screenshots/home_page_demo.png)](https://www.youtube.com/watch?v=home_page_demo)
+
+### Recommendations Page Demo
+
+[![Recommendations Page Demo](screenshots/recommendations_page_demo.png)](https://www.youtube.com/watch?v=recommendations_page_demo)
+
+### Statistics Page Demo
+
+[![Statistics Page Demo](screenshots/statistics_page_demo.png)](https://www.youtube.com/watch?v=statistics_page_demo)
+
+### User Tracking Page Demo
+
+[![User Tracking Page Demo](screenshots/user_tracking_page_demo.png)](https://www.youtube.com/watch?v=user_tracking_page_demo)
