@@ -37,6 +37,14 @@ jobs:
       run: mvn verify
       working-directory: .
 
+    - name: Build frontend
+      run: npm install && npm run build
+      working-directory: ./frontend
+
+    - name: Run frontend tests
+      run: npm test
+      working-directory: ./frontend
+
     - name: Deploy to Kubernetes
       run: |
         kubectl apply -f k8s/user-tracking-service-deployment.yaml
