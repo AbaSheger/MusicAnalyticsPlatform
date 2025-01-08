@@ -113,6 +113,83 @@ Example configuration:
     distribution: 'temurin'
 ```
 
+### Installing Docker Compose in GitHub Actions Workflow
+
+To ensure that Docker Compose is available in the GitHub Actions runner environment, you need to add steps to install Docker Compose before running any `docker-compose` commands.
+
+Example configuration:
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v2
+      with:
+        java-version: 21
+        distribution: 'temurin'
+
+    - name: Build with Maven
+      run: mvn clean install
+      working-directory: .
+
+    - name: Build Docker images
+      run: docker-compose build
+
+    - name: Run unit tests
+      run: mvn test
+      working-directory: .
+
+    - name: Run integration tests
+      run: mvn verify
+      working-directory: .
+
+    - name: Install frontend dependencies
+      run: npm install
+      working-directory: ./frontend
+
+    - name: Install react-scripts globally
+      run: npm install -g react-scripts
+
+    - name: Build frontend
+      run: npm run build
+      working-directory: ./frontend
+
+    - name: Run frontend tests
+      run: npm test
+      working-directory: ./frontend
+
+    - name: Start frontend
+      run: npm start
+      working-directory: ./frontend
+
+    - name: Set up database
+      run: |
+        docker-compose up -d db
+        sleep 10 # wait for the database to be ready
+
+    - name: Run database migrations
+      run: mvn flyway:migrate
+      working-directory: .
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/user-tracking-service-deployment.yaml
+        kubectl apply -f k8s/recommendation-service-deployment.yaml
+        kubectl apply -f k8s/statistics-service-deployment.yaml
+        kubectl apply -f k8s/api-gateway-deployment.yaml
+        kubectl apply -f k8s/eureka-server-deployment.yaml
+```
+
 ## Microservices Overview
 
 ### UserTrackingService
