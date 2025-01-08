@@ -75,6 +75,31 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
 
 3. ** Optionally, use Kubernetes (Minikube or similar) to manage the deployment if desired.**
 
+4. **Navigate to the `frontend` directory**:
+   ```bash
+   cd frontend
+   ```
+
+5. **Install the dependencies**:
+   ```bash
+   npm install
+   ```
+
+6. **Build the frontend application**:
+   ```bash
+   npm run build
+   ```
+
+7. **Start the frontend application**:
+   ```bash
+   npm start
+   ```
+
+8. **Open your browser and navigate to**:
+   ```
+   http://localhost:3000
+   ```
+
 ### GitHub Actions Workflow
 
 In the GitHub Actions workflow configuration file `.github/workflows/ci.yml`, ensure that the `distribution` parameter is specified under the `setup-java` step with the value `temurin`. This is required for the `actions/setup-java` step to function correctly.
