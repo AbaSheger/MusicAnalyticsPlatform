@@ -9,6 +9,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - eureka-server
+    volumes:
+      - user-tracking-data:/data
 
   recommendation-service:
     image: recommendation-service
@@ -18,6 +20,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - eureka-server
+    volumes:
+      - recommendation-data:/data
 
   statistics-service:
     image: statistics-service
@@ -27,6 +31,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - eureka-server
+    volumes:
+      - statistics-data:/data
 
   api-gateway:
     image: api-gateway
@@ -43,3 +49,8 @@ services:
       - "8761:8761"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+
+volumes:
+  user-tracking-data:
+  recommendation-data:
+  statistics-data:
