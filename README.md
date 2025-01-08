@@ -157,6 +157,10 @@ jobs:
       run: npm install
       working-directory: ./frontend
 
+    - name: Install react-router-dom
+      run: npm install react-router-dom
+      working-directory: ./frontend
+
     - name: Install react-scripts globally
       run: npm install -g react-scripts
 
