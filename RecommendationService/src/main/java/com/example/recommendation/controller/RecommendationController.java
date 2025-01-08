@@ -15,7 +15,7 @@ import java.util.HashMap;
 @RequestMapping("/recommendation")
 public class RecommendationController {
 
-    private static final String LAST_FM_API_KEY = "YOUR_LAST_FM_API_KEY";
+    private static final String LAST_FM_API_KEY = "P057f";
     private static final String LAST_FM_API_URL = "http://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user=%s&api_key=" + LAST_FM_API_KEY + "&format=json";
 
     @GetMapping("/getRecommendations/{userId}")

@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user-tracking-service
+          uri: lb://USER-TRACKING-SERVICE
+          predicates:
+            - Path=/user-tracking/**
+        - id: recommendation-service
+          uri: lb://RECOMMENDATION-SERVICE
+          predicates:
+            - Path=/recommendation/**
+        - id: statistics-service
+          uri: lb://STATISTICS-SERVICE
+          predicates:
+            - Path=/statistics/**
+  application:
+    name: api-gateway
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
