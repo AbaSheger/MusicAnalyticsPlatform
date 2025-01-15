@@ -50,6 +50,12 @@ public class RecommendationController {
         return userActivityData;
     }
     
+    /**
+     * Generates AI-based recommendations based on user activity data.
+     *
+     * @param userActivityData A map containing user activity data such as playback history and search history.
+     * @return A list of recommended tracks.
+     */
     private List<String> generateAIRecommendations(Map<String, List<String>> userActivityData) {
         // Implement AI-based recommendation algorithm
         List<String> recommendations = new ArrayList<>();
