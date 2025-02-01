@@ -35,6 +35,8 @@ The platform is composed of three core microservices:
 
 Each microservice communicates through REST APIs, and a high-level diagram is recommended to illustrate the architecture.
 
+![Architecture Diagram](architecture_diagram.png)
+
 ## Tech Stack
 - **Java**
 - **Spring Boot**
@@ -247,6 +249,18 @@ Add the following dependencies to each microservice module:
 - Spring Cloud Gateway is used as the API gateway for routing requests to appropriate microservices.
 - Eureka Server is used for service discovery to register each microservice and enable communication between them.
 
+### API Gateway Configuration
+The API Gateway is configured using Spring Cloud Gateway. The routes for the microservices are defined in the `application.yml` file located in the `api-gateway/src/main/resources` directory.
+
+### Eureka Server Configuration
+The Eureka Server is configured using the `application.yml` file located in the `eureka-server/src/main/resources` directory. The Eureka Server registers each microservice and enables service discovery.
+
+### Running the API Gateway and Eureka Server
+Start the API Gateway and Eureka Server using Docker or Kubernetes as described in the previous sections.
+
+### Accessing the Microservices
+Use the API Gateway to access the microservices. The API Gateway routes requests to the appropriate microservice based on the configured routes.
+
 ## Usage
 Use Postman or any API client to interact with the microservices.
 
@@ -258,6 +272,13 @@ Example requests:
 
 ## Contributing
 Contributions are welcome! Please fork the repository and submit a pull request.
+
+### Guidelines for Contributors
+1. Fork the repository and create your branch from `main`.
+2. If you've added code that should be tested, add tests.
+3. Ensure the test suite passes.
+4. Make sure your code lints.
+5. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt) file for details.
@@ -370,6 +391,11 @@ By following these detailed setup instructions, you should be able to build, run
    ```
    http://localhost:3000
    ```
+
+### Troubleshooting Tips
+- If you encounter issues with the frontend not connecting to the backend, ensure that the backend services are running and accessible.
+- Check the network tab in the browser's developer tools to see if there are any failed requests.
+- Ensure that the API endpoints in the frontend code match the backend routes.
 
 The frontend application should now be running and able to interact with the backend services.
 
