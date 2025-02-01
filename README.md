@@ -41,7 +41,6 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
 - **Java**
 - **Spring Boot**
 - **Docker**
-- **Kubernetes**
 - **MySQL**
 - **Spring Cloud Gateway**
 - **Eureka Server**
@@ -60,7 +59,6 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
 - **Java 21**
 - **Maven**
 - **Docker**
-- **Kubernetes** (Minikube or other local setup)
 - **MySQL**
 
 ### Build and Run
@@ -75,29 +73,27 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
    docker-compose up
    ```
 
-3. ** Optionally, use Kubernetes (Minikube or similar) to manage the deployment if desired.**
-
-4. **Navigate to the `frontend` directory**:
+3. **Navigate to the `frontend` directory**:
    ```bash
    cd frontend
    ```
 
-5. **Install the dependencies**:
+4. **Install the dependencies**:
    ```bash
    npm install
    ```
 
-6. **Build the frontend application**:
+5. **Build the frontend application**:
    ```bash
    npm run build
    ```
 
-7. **Start the frontend application**:
+6. **Start the frontend application**:
    ```bash
    npm start
    ```
 
-8. **Open your browser and navigate to**:
+7. **Open your browser and navigate to**:
    ```
    http://localhost:3000
    ```
@@ -186,14 +182,6 @@ jobs:
     - name: Run database migrations
       run: mvn flyway:migrate
       working-directory: .
-
-    - name: Deploy to Kubernetes
-      run: |
-        kubectl apply -f k8s/user-tracking-service-deployment.yaml
-        kubectl apply -f k8s/recommendation-service-deployment.yaml
-        kubectl apply -f k8s/statistics-service-deployment.yaml
-        kubectl apply -f k8s/api-gateway-deployment.yaml
-        kubectl apply -f k8s/eureka-server-deployment.yaml
 ```
 
 ## Microservices Overview
@@ -256,7 +244,7 @@ The API Gateway is configured using Spring Cloud Gateway. The routes for the mic
 The Eureka Server is configured using the `application.yml` file located in the `eureka-server/src/main/resources` directory. The Eureka Server registers each microservice and enables service discovery.
 
 ### Running the API Gateway and Eureka Server
-Start the API Gateway and Eureka Server using Docker or Kubernetes as described in the previous sections.
+Start the API Gateway and Eureka Server using Docker as described in the previous sections.
 
 ### Accessing the Microservices
 Use the API Gateway to access the microservices. The API Gateway routes requests to the appropriate microservice based on the configured routes.
@@ -317,24 +305,6 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt)
    docker-compose up
    ```
 
-### Setting Up Docker and Kubernetes
-
-1. **Install Docker**:
-   Follow the instructions on the [Docker website](https://docs.docker.com/get-docker/) to install Docker on your machine.
-
-2. **Install Kubernetes**:
-   Follow the instructions on the [Kubernetes website](https://kubernetes.io/docs/setup/) to install Kubernetes. You can use Minikube for a local setup.
-
-3. **Deploy the microservices to Kubernetes**:
-   Create Kubernetes deployment and service files for each microservice and apply them using `kubectl`:
-   ```bash
-   kubectl apply -f user-tracking-service-deployment.yaml
-   kubectl apply -f recommendation-service-deployment.yaml
-   kubectl apply -f statistics-service-deployment.yaml
-   kubectl apply -f api-gateway-deployment.yaml
-   kubectl apply -f eureka-server-deployment.yaml
-   ```
-
 ### API Gateway and Eureka Server Configuration
 
 1. **API Gateway Configuration**:
@@ -344,7 +314,7 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt)
    The Eureka Server is configured using the `application.yml` file located in the `eureka-server/src/main/resources` directory. The Eureka Server registers each microservice and enables service discovery.
 
 3. **Running the API Gateway and Eureka Server**:
-   Start the API Gateway and Eureka Server using Docker or Kubernetes as described in the previous sections.
+   Start the API Gateway and Eureka Server using Docker as described in the previous sections.
 
 4. **Accessing the Microservices**:
    Use the API Gateway to access the microservices. The API Gateway routes requests to the appropriate microservice based on the configured routes.
@@ -362,7 +332,7 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt)
 
 ## Conclusion
 
-By following these detailed setup instructions, you should be able to build, run, and deploy the Music Analytics Platform microservices using Docker and Kubernetes. The API Gateway and Eureka Server configuration ensures proper routing and service discovery, enabling seamless communication between the microservices. Verify the setup by running integration tests and checking the API documentation to ensure everything is working as expected.
+By following these detailed setup instructions, you should be able to build, run, and deploy the Music Analytics Platform microservices using Docker. The API Gateway and Eureka Server configuration ensures proper routing and service discovery, enabling seamless communication between the microservices. Verify the setup by running integration tests and checking the API documentation to ensure everything is working as expected.
 
 ## Frontend Setup Instructions
 

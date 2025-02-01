@@ -69,11 +69,3 @@ jobs:
     - name: Run database migrations
       run: mvn flyway:migrate
       working-directory: .
-
-    - name: Deploy to Kubernetes
-      run: |
-        kubectl apply -f k8s/user-tracking-service-deployment.yaml
-        kubectl apply -f k8s/recommendation-service-deployment.yaml
-        kubectl apply -f k8s/statistics-service-deployment.yaml
-        kubectl apply -f k8s/api-gateway-deployment.yaml
-        kubectl apply -f k8s/eureka-server-deployment.yaml
