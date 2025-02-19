@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   user-tracking-service:
-    image: user-tracking-service
+    image: user-tracking-service:latest
+    build:
+      context: ./user-tracking-service
     ports:
       - "8081:8081"
     environment:
@@ -13,7 +15,9 @@ services:
       - user-tracking-data:/data
 
   recommendation-service:
-    image: recommendation-service
+    image: recommendation-service:latest
+    build:
+      context: ./recommendation-service
     ports:
       - "8082:8082"
     environment:
@@ -24,7 +28,9 @@ services:
       - recommendation-data:/data
 
   statistics-service:
-    image: statistics-service
+    image: statistics-service:latest
+    build:
+      context: ./statistics-service
     ports:
       - "8083:8083"
     environment:
@@ -35,7 +41,9 @@ services:
       - statistics-data:/data
 
   api-gateway:
-    image: api-gateway
+    image: api-gateway:latest
+    build:
+      context: ./api-gateway
     ports:
       - "8080:8080"
     environment:
@@ -44,7 +52,9 @@ services:
       - eureka-server
 
   eureka-server:
-    image: eureka-server
+    image: eureka-server:latest
+    build:
+      context: ./eureka-server
     ports:
       - "8761:8761"
     environment:
