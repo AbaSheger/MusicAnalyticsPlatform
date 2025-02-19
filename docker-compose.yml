@@ -60,6 +60,13 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
 
+  frontend:
+    image: frontend:latest
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+
 volumes:
   user-tracking-data:
   recommendation-data:

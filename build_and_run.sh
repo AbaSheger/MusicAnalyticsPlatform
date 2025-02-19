@@ -4,7 +4,7 @@
 mvn clean install
 
 # Build Docker images
-services=("eureka-server" "recommendation-service" "statistics-service" "api-gateway" "user-tracking-service")
+services=("eureka-server" "recommendation-service" "statistics-service" "api-gateway" "user-tracking-service" "frontend")
 for service in "${services[@]}"; do
   echo "Building Docker image for $service..."
   cd $service
