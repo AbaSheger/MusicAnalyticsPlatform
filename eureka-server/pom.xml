@@ -42,7 +42,6 @@
                 <artifactId>dockerfile-maven-plugin</artifactId>
                 <version>1.4.13</version>
                 <configuration>
-                    <!-- Changed dockerDirectory to current directory '.' to correctly reference the folder containing Dockerfile -->
                     <dockerDirectory>.</dockerDirectory>
                     <dockerfile>Dockerfile</dockerfile>
                     <repository>com.example</repository>
