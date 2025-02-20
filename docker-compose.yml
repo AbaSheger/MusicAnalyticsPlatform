@@ -55,6 +55,7 @@ services:
     image: eureka-server:latest
     build:
       context: ./eureka-server
+      dockerfile: ./Dockerfile
     ports:
       - "8761:8761"
     environment:

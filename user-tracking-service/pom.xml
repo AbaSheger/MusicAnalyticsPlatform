@@ -42,8 +42,8 @@
                 <artifactId>dockerfile-maven-plugin</artifactId>
                 <version>1.4.13</version>
                 <configuration>
-                    <!-- Set dockerDirectory to '.' to ensure the Dockerfile is found at the module root -->
-                    <dockerDirectory>.</dockerDirectory>
+                    <!-- Set dockerDirectory to '${project.basedir}' to ensure the Dockerfile is found at the module root -->
+                    <dockerDirectory>${project.basedir}</dockerDirectory>
                     <dockerfile>Dockerfile</dockerfile>
                     <repository>com.example</repository>
                     <tag>${project.artifactId}</tag>
