@@ -1,17 +1,4 @@
 services:
-  user-tracking-service:
-    image: user-tracking-service:latest
-    build:
-      context: ./user-tracking-service
-    ports:
-      - "8081:8081"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    depends_on:
-      - eureka-server
-    volumes:
-      - user-tracking-data:/data
-
   recommendation-service:
     image: recommendation-service:latest
     build:
@@ -60,6 +47,5 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
 
 volumes:
-  user-tracking-data:
   recommendation-data:
   statistics-data:

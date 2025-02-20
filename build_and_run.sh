@@ -4,7 +4,7 @@ REM Build Maven project
 mvn clean install
 
 REM Build Docker images
-set services=eureka-server recommendation-service statistics-service api-gateway user-tracking-service
+set services=eureka-server recommendation-service statistics-service api-gateway
 for %%s in (%services%) do (
     echo Building Docker image for %%s...
     cd %%s

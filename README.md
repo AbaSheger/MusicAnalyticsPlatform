@@ -1,6 +1,6 @@
 # Music Analytics Platform
 
-A music analytics platform using a microservice architecture to track user activity, provide personalized recommendations, and aggregate music playback statistics.
+A music analytics platform using a microservice architecture to provide personalized recommendations and aggregate music playback statistics.
 
 ## Table of Contents
 - [Project Overview](#project-overview)
@@ -11,7 +11,6 @@ A music analytics platform using a microservice architecture to track user activ
     - [Requirements](#requirements)
     - [Build and Run](#build-and-run)
 - [Microservices Overview](#microservices-overview)
-    - [UserTrackingService](#usertrackingservice)
     - [RecommendationService](#recommendationservice)
     - [StatisticsService](#statisticsservice)
 - [Multi-Module Project Setup](#multi-module-project-setup)
@@ -24,13 +23,12 @@ A music analytics platform using a microservice architecture to track user activ
 - [License](#license)
 
 ## Project Overview
-This project is a music analytics platform designed to track user activity, provide personalized music recommendations, and aggregate playback statistics using a microservice architecture.
+This project is a music analytics platform designed to provide personalized music recommendations and aggregate playback statistics using a microservice architecture.
 
 ## Architecture
-The platform is composed of three core microservices:
+The platform is composed of two core microservices:
 
-- **UserTrackingService**: Logs user activities such as playbacks and searches.
-- **RecommendationService**: Generates personalized music recommendations based on user activity.
+- **RecommendationService**: Generates personalized music recommendations.
 - **StatisticsService**: Aggregates playback data to provide insights, such as the top 10 most-played tracks.
 
 Each microservice communicates through REST APIs, and a high-level diagram is recommended to illustrate the architecture.
@@ -46,7 +44,6 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
 - **Eureka Server**
 
 ## Features
-- Track user playback and search activities.
 - Generate personalized recommendations based on user behavior.
 - Aggregate playback data for analytics.
 - Scalable microservice architecture.
@@ -138,13 +135,6 @@ jobs:
 
 ## Microservices Overview
 
-### UserTrackingService
-Logs user actions like playbacks and searches.
-
-Endpoints:
-- POST /logPlayback
-- POST /logSearch
-
 ### RecommendationService
 Provides personalized music recommendations based on user activity.
 
@@ -170,7 +160,6 @@ Routes requests to the appropriate microservices.
 Create a parent Maven project with a `pom.xml` that contains shared dependencies and plugin configurations.
 
 ### Modules
-- UserTrackingService
 - RecommendationService
 - StatisticsService
 - Optionally, create a common module for shared utilities and domain models.
@@ -205,7 +194,6 @@ Use the API Gateway to access the microservices. The API Gateway routes requests
 Use Postman or any API client to interact with the microservices.
 
 Example requests:
-- Log a playback activity: `POST /logPlayback`
 - Get personalized recommendations: `GET /getRecommendations/{userId}`
 - Get AI-generated recommendations: `GET /getAIRecommendations/{userId}`
 - Retrieve top tracks: `GET /topTracks`
@@ -240,9 +228,7 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt)
 
 3. **Navigate to each microservice directory and build Docker images**:
    ```bash
-   cd UserTrackingService
-   docker build -t user-tracking-service .
-   cd ../RecommendationService
+   cd RecommendationService
    docker build -t recommendation-service .
    cd ../StatisticsService
    docker build -t statistics-service .
@@ -288,19 +274,7 @@ By following these detailed setup instructions, you should be able to build, run
 
 ## Detailed Examples and Use Cases
 
-### Example 1: Logging User Playback and Search Activities
-
-1. **Log a playback activity**:
-   ```bash
-   curl -X POST http://localhost:8081/user-tracking/logPlayback -H "Content-Type: application/json" -d '{"playback": "Track A"}'
-   ```
-
-2. **Log a search activity**:
-   ```bash
-   curl -X POST http://localhost:8081/user-tracking/logSearch -H "Content-Type: application/json" -d '{"search": "Artist X"}'
-   ```
-
-### Example 2: Getting Personalized Recommendations
+### Example 1: Getting Personalized Recommendations
 
 1. **Get personalized recommendations for a user**:
    ```bash
@@ -312,7 +286,7 @@ By following these detailed setup instructions, you should be able to build, run
    curl -X GET http://localhost:8082/recommendation/getAIRecommendations/1
    ```
 
-### Example 3: Retrieving Top Tracks
+### Example 2: Retrieving Top Tracks
 
 1. **Get the top tracks**:
    ```bash
@@ -321,23 +295,18 @@ By following these detailed setup instructions, you should be able to build, run
 
 ## Microservices Interactions and Data Flow
 
-### UserTrackingService
-
-- **Logs user activities**: The UserTrackingService logs user activities such as playbacks and searches. These logs are stored in a database for further analysis.
-
 ### RecommendationService
 
-- **Generates personalized recommendations**: The RecommendationService retrieves user activity data from the UserTrackingService and uses an AI-based algorithm to generate personalized music recommendations.
+- **Generates personalized recommendations**: The RecommendationService retrieves user activity data and uses an AI-based algorithm to generate personalized music recommendations.
 
 ### StatisticsService
 
-- **Aggregates playback data**: The StatisticsService retrieves playback data from the UserTrackingService and aggregates it to provide insights such as the top 10 most-played tracks.
+- **Aggregates playback data**: The StatisticsService retrieves playback data and aggregates it to provide insights such as the top 10 most-played tracks.
 
 ### Data Flow
 
-1. **User Activity Logging**: The UserTrackingService logs user activities such as playbacks and searches.
-2. **Recommendation Generation**: The RecommendationService retrieves user activity data from the UserTrackingService and generates personalized recommendations.
-3. **Data Aggregation**: The StatisticsService retrieves playback data from the UserTrackingService and aggregates it to provide insights.
+1. **Recommendation Generation**: The RecommendationService retrieves user activity data and generates personalized recommendations.
+2. **Data Aggregation**: The StatisticsService retrieves playback data and aggregates it to provide insights.
 
 ## User Interface Screenshots
 
@@ -353,10 +322,6 @@ By following these detailed setup instructions, you should be able to build, run
 
 ![Statistics Page](screenshots/statistics_page.png)
 
-### User Tracking Page
-
-![User Tracking Page](screenshots/user_tracking_page.png)
-
 ## Demo Videos
 
 ### Home Page Demo
@@ -370,7 +335,3 @@ By following these detailed setup instructions, you should be able to build, run
 ### Statistics Page Demo
 
 [![Statistics Page Demo](screenshots/statistics_page_demo.png)](https://www.youtube.com/watch?v=statistics_page_demo)
-
-### User Tracking Page Demo
-
-[![User Tracking Page Demo](screenshots/user_tracking_page_demo.png)](https://www.youtube.com/watch?v=user_tracking_page_demo)
