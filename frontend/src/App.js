@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Recommendation from './components/Recommendation';
 import Statistics from './components/Statistics';
 import UserTracking from './components/UserTracking';
@@ -19,9 +19,11 @@ function App() {
           </ul>
         </nav>
         <main>
-          <Route path="/recommendation" component={Recommendation} />
-          <Route path="/statistics" component={Statistics} />
-          <Route path="/user-tracking" component={UserTracking} />
+          <Routes>
+            <Route path="/recommendation" element={<Recommendation />} />
+            <Route path="/statistics" element={<Statistics />} />
+            <Route path="/user-tracking" element={<UserTracking />} />
+          </Routes>
         </main>
         <footer>
           <p>&copy; 2023 Music Analytics Platform. All rights reserved.</p>

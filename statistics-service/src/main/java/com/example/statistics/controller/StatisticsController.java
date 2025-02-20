@@ -18,10 +18,10 @@ import java.util.Map;
 @RequestMapping("/statistics")
 public class StatisticsController {
 
-    @Value("${spotify.api.url}")
+    @Value("${SPOTIFY_API_URL}")
     private String spotifyApiUrl;
 
-    @Value("${spotify.api.token}")
+    @Value("${SPOTIFY_API_TOKEN}")
     private String spotifyApiToken;
 
     @GetMapping("/topTracks")
