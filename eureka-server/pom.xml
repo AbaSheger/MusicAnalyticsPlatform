@@ -42,7 +42,7 @@
                 <artifactId>dockerfile-maven-plugin</artifactId>
                 <version>1.4.13</version>
                 <configuration>
-                    <dockerDirectory>.</dockerDirectory>
+                    <dockerDirectory>/app</dockerDirectory>
                     <dockerfile>Dockerfile</dockerfile>
                     <repository>com.example</repository>
                     <tag>${project.artifactId}</tag>
