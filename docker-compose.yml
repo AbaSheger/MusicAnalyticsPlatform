@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   user-tracking-service:
     image: user-tracking-service:latest
@@ -55,7 +53,7 @@ services:
     image: eureka-server:latest
     build:
       context: ./eureka-server
-      dockerfile: /app/Dockerfile
+      dockerfile: ./Dockerfile
     ports:
       - "8761:8761"
     environment:
