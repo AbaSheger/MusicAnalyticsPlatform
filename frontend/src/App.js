@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Recommendation from './components/Recommendation';
 import Statistics from './components/Statistics';
-import UserTracking from './components/UserTracking';
 
 function App() {
   return (
@@ -15,14 +14,12 @@ function App() {
           <ul>
             <li><Link to="/recommendation">Recommendation</Link></li>
             <li><Link to="/statistics">Statistics</Link></li>
-            <li><Link to="/user-tracking">User Tracking</Link></li>
           </ul>
         </nav>
         <main>
           <Routes>
             <Route path="/recommendation" element={<Recommendation />} />
             <Route path="/statistics" element={<Statistics />} />
-            <Route path="/user-tracking" element={<UserTracking />} />
           </Routes>
         </main>
         <footer>

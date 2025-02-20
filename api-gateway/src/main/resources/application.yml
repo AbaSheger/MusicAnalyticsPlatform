@@ -2,10 +2,6 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: user-tracking-service
-          uri: lb://USER-TRACKING-SERVICE
-          predicates:
-            - Path=/user-tracking/**
         - id: recommendation-service
           uri: lb://RECOMMENDATION-SERVICE
           predicates:
