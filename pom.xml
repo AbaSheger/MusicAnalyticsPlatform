@@ -9,11 +9,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>user-tracking-service</module>
-        <module>recommendation-service</module>
-        <module>statistics-service</module>
         <module>api-gateway</module>
         <module>eureka-server</module>
+        <module>recommendation-service</module>
+        <module>statistics-service</module>
+        <module>user-tracking-service</module>
     </modules>
 
     <dependencyManagement>
@@ -35,26 +35,7 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                 </plugin>
-                <plugin>
-                    <groupId>com.spotify</groupId>
-                    <artifactId>dockerfile-maven-plugin</artifactId>
-                    <version>1.4.13</version>
-                    <executions>
-                        <execution>
-                            <id>default</id>
-                            <goals>
-                                <goal>build</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <repository>com.example</repository>
-                        <tag>${project.artifactId}</tag>
-                        <buildArgs>
-                            <JAR_FILE>target/${project.build.finalName}.jar</JAR_FILE>
-                        </buildArgs>
-                    </configuration>
-                </plugin>
+                <!-- ... Removed dockerfile-maven-plugin to avoid misconfiguration in modules ... -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-checkstyle-plugin</artifactId>
