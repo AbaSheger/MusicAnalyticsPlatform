@@ -1,16 +1,17 @@
-#!/bin/bash
 
-# Build Maven project
+@echo off
+
+REM Build Maven project
 mvn clean install
 
-# Build Docker images
-services=("eureka-server" "recommendation-service" "statistics-service" "api-gateway" "user-tracking-service" "frontend")
-for service in "${services[@]}"; do
-  echo "Building Docker image for $service..."
-  cd $service
-  docker build -t $service .
-  cd ..
-done
+REM Build Docker images
+set services=eureka-server recommendation-service statistics-service api-gateway user-tracking-service frontend
+for %%s in (%services%) do (
+    echo Building Docker image for %%s...
+    cd %%s
+    docker build -t %%s .
+    cd ..
+)
 
-# Run Docker Compose
+REM Run Docker Compose
 docker-compose up

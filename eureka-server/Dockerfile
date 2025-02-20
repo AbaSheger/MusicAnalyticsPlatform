@@ -5,7 +5,7 @@ FROM maven:3.8.4-openjdk-11 AS build
 WORKDIR /app
 
 # Copy the pom.xml file and download the dependencies
-COPY pom.xml .
+COPY pom.xml ./
 RUN mvn dependency:go-offline
 
 # Copy the source code and build the application
