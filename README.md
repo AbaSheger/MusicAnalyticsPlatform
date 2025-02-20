@@ -73,31 +73,6 @@ Each microservice communicates through REST APIs, and a high-level diagram is re
    docker-compose up
    ```
 
-3. **Navigate to the `frontend` directory**:
-   ```bash
-   cd frontend
-   ```
-
-4. **Install the dependencies**:
-   ```bash
-   npm install
-   ```
-
-5. **Build the frontend application**:
-   ```bash
-   npm run build
-   ```
-
-6. **Start the frontend application**:
-   ```bash
-   npm start
-   ```
-
-7. **Open your browser and navigate to**:
-   ```
-   http://localhost:3000
-   ```
-
 ### GitHub Actions Workflow
 
 In the GitHub Actions workflow configuration file `.github/workflows/ci.yml`, ensure that the `distribution` parameter is specified under the `setup-java` step with the value `temurin`. This is required for the `actions/setup-java` step to function correctly.
@@ -150,29 +125,6 @@ jobs:
     - name: Run integration tests
       run: mvn verify
       working-directory: .
-
-    - name: Install frontend dependencies
-      run: npm install
-      working-directory: ./frontend
-
-    - name: Install react-router-dom
-      run: npm install react-router-dom
-      working-directory: ./frontend
-
-    - name: Install react-scripts globally
-      run: npm install -g react-scripts
-
-    - name: Build frontend
-      run: npm run build
-      working-directory: ./frontend
-
-    - name: Run frontend tests
-      run: npm test
-      working-directory: ./frontend
-
-    - name: Start frontend
-      run: npm start
-      working-directory: ./frontend
 
     - name: Set up database
       run: |
@@ -333,41 +285,6 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt)
 ## Conclusion
 
 By following these detailed setup instructions, you should be able to build, run, and deploy the Music Analytics Platform microservices using Docker. The API Gateway and Eureka Server configuration ensures proper routing and service discovery, enabling seamless communication between the microservices. Verify the setup by running integration tests and checking the API documentation to ensure everything is working as expected.
-
-## Frontend Setup Instructions
-
-### Requirements
-- **Node.js** (v14 or higher)
-- **npm** (v6 or higher)
-
-### Build and Run
-
-1. **Navigate to the `frontend` directory**:
-   ```bash
-   cd frontend
-   ```
-
-2. **Install the dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**:
-   ```bash
-   npm start
-   ```
-
-4. **Open your browser and navigate to**:
-   ```
-   http://localhost:3000
-   ```
-
-### Troubleshooting Tips
-- If you encounter issues with the frontend not connecting to the backend, ensure that the backend services are running and accessible.
-- Check the network tab in the browser's developer tools to see if there are any failed requests.
-- Ensure that the API endpoints in the frontend code match the backend routes.
-
-The frontend application should now be running and able to interact with the backend services.
 
 ## Detailed Examples and Use Cases
 

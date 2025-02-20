@@ -42,25 +42,6 @@ jobs:
       run: mvn verify
       working-directory: .
 
-    - name: Install frontend dependencies
-      run: npm install
-      working-directory: ./frontend
-
-    - name: Install react-scripts globally
-      run: npm install -g react-scripts
-
-    - name: Build frontend
-      run: npm run build
-      working-directory: ./frontend
-
-    - name: Run frontend tests
-      run: npm test
-      working-directory: ./frontend
-
-    - name: Start frontend
-      run: npm start
-      working-directory: ./frontend
-
     - name: Set up database
       run: |
         docker-compose up -d db
