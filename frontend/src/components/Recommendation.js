@@ -20,17 +20,25 @@ function Recommendation() {
 
   return (
     <div className="recommendation">
-      <h2>AI-Generated Recommendations</h2>
+      <h2>Recommended For You</h2>
       {loading ? (
-        <Spinner animation="border" role="status">
-          <span className="sr-only">Loading...</span>
-        </Spinner>
+        <div className="text-center">
+          <Spinner animation="border" role="status">
+            <span className="sr-only">Loading...</span>
+          </Spinner>
+        </div>
       ) : (
-        <ul>
+        <div className="tracks-container">
           {recommendations.map((recommendation, index) => (
-            <li key={index}>{recommendation}</li>
+            <div key={index} className="track-item">
+              <span className="track-number">{index + 1}</span>
+              <div className="track-info">
+                <div className="track-title">{recommendation.split(' - ')[0]}</div>
+                <div className="track-artist">{recommendation.split(' - ')[1]}</div>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

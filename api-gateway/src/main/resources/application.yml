@@ -1,19 +1,46 @@
+server:
+  port: 8080
+
 spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true
+          lowerCaseServiceId: true
       routes:
         - id: recommendation-service
-          uri: lb://RECOMMENDATION-SERVICE
+          uri: lb://recommendation-service
           predicates:
             - Path=/recommendation/**
         - id: statistics-service
-          uri: lb://STATISTICS-SERVICE
+          uri: lb://statistics-service
           predicates:
             - Path=/statistics/**
-  application:
-    name: api-gateway
+        - id: user-tracking-service
+          uri: lb://user-tracking-service
+          predicates:
+            - Path=/user-tracking/**
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Docker profile
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/

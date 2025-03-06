@@ -34,5 +34,6 @@
   },
   "resolutions": {
     "webpack": "5.65.0"
-  }
+  },
+  "proxy": "http://localhost:8080"
 }

@@ -20,17 +20,25 @@ function Statistics() {
 
   return (
     <div className="statistics">
-      <h2>Top Tracks</h2>
+      <h2>Your Top Tracks</h2>
       {loading ? (
-        <Spinner animation="border" role="status">
-          <span className="sr-only">Loading...</span>
-        </Spinner>
+        <div className="text-center">
+          <Spinner animation="border" role="status">
+            <span className="sr-only">Loading...</span>
+          </Spinner>
+        </div>
       ) : (
-        <ul>
+        <div className="tracks-container">
           {topTracks.map((track, index) => (
-            <li key={index}>{track}</li>
+            <div key={index} className="track-item">
+              <span className="track-number">{index + 1}</span>
+              <div className="track-info">
+                <div className="track-title">{track.split(' - ')[0]}</div>
+                <div className="track-artist">{track.split(' - ')[1]}</div>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
