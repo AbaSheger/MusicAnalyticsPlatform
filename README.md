@@ -50,6 +50,8 @@ This platform consists of several microservices that work together to provide mu
 - Java 17 or higher
 - Node.js and npm
 - Maven
+- Docker and Docker Compose
+- Windows users can use the `build_and_run.bat` script to automate the build and run process
 
 ### Building and Running
 
@@ -85,6 +87,16 @@ This platform consists of several microservices that work together to provide mu
    cd frontend
    npm install
    npm start
+   ```
+
+5. **Using Docker Compose**
+   ```bash
+   docker-compose up --build
+   ```
+
+6. **Using the `build_and_run.bat` script (Windows)**
+   ```bash
+   build_and_run.bat
    ```
 
 ## Accessing the Application
