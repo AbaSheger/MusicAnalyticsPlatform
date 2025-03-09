@@ -69,10 +69,18 @@ spring:
           predicates:
             - Path=/user-tracking/**
 
+# Self-ping configuration to keep the service alive
+app:
+  self-ping:
+    enabled: true
+    service-url: https://${RENDER_EXTERNAL_HOSTNAME}/actuator/health
+
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+    fetch-registry: true
+    register-with-eureka: true
   instance:
     hostname: ${RENDER_EXTERNAL_HOSTNAME}
     non-secure-port-enabled: false
