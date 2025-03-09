@@ -79,6 +79,12 @@ spring:
       settings:
         web-allow-others: true
 
+# Self-ping configuration to keep the service alive
+app:
+  self-ping:
+    enabled: true
+    service-url: https://${RENDER_EXTERNAL_HOSTNAME}/user-tracking/playbacks
+
 management:
   endpoints:
     web:
