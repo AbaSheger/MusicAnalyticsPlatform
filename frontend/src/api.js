@@ -9,7 +9,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 20000, // 20 second timeout
+  timeout: 60000, // 20 second timeout
 });
 
 // Create a global waking up state
