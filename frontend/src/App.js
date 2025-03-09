@@ -5,6 +5,7 @@ import Statistics from './components/Statistics';
 import UserTracking from './components/UserTracking';
 import TrackingHistory from './components/TrackingHistory';
 import WakeUpNotification from './components/WakeUpNotification';
+import MockDataNotification from './components/MockDataNotification';
 
 function NavLink({ to, children }) {
   const location = useLocation();
@@ -68,6 +69,9 @@ function App() {
         
         {/* Service wake-up notification */}
         <WakeUpNotification />
+        
+        {/* Mock data notification */}
+        <MockDataNotification />
       </div>
     </Router>
   );
