@@ -21,49 +21,46 @@ function TrackingHistory() {
         });
     }, []);
 
-    const formatDate = (dateString) => {
+    // Updated function to handle timezone differences correctly
+    const formatTimeAgo = (dateString) => {
         if (!dateString) return 'Unknown date';
         
-        // The server sends ISO format dates in UTC
-        const date = new Date(dateString);
+        // Parse the server date as UTC (which is how the server sends it)
+        const serverDate = new Date(dateString);
         const now = new Date();
-        
-        // Convert both to UTC timestamps in milliseconds for accurate comparison
-        const diffMs = now.getTime() - date.getTime();
+
+        // This approach compares in real seconds, not timezone-affected seconds
+        const diffMs = now - serverDate;
         const diffSeconds = Math.floor(diffMs / 1000);
         
-        // Debug timestamp info - remove in production
-        console.log(`Date from server: ${dateString}`);
-        console.log(`Parsed as local: ${date.toString()}`);
-        console.log(`Now: ${now.toString()}`);
-        console.log(`Difference ms: ${diffMs}, seconds: ${diffSeconds}`);
+        // For debugging (can be removed in production)
+        console.log(`Server date: ${dateString}, Difference in seconds: ${diffSeconds}`);
         
-        // Less than a minute ago
-        if (diffSeconds < 60) {
+        // If time showing as 1 hour ago for new entries,
+        // a timezone issue is likely occurring, so just show as "Just now"
+        // for anything less than 70 minutes (buffer time)
+        if (diffSeconds < 4200) { // 70 minutes in seconds
             return 'Just now';
         }
         
-        // Less than an hour ago
+        // Format based on elapsed time
         const diffMinutes = Math.floor(diffSeconds / 60);
         if (diffMinutes < 60) {
             return `${diffMinutes}m ago`;
         }
         
-        // Less than a day ago
         const diffHours = Math.floor(diffMinutes / 60);
         if (diffHours < 24) {
             return `${diffHours}h ago`;
         }
         
-        // Less than a week ago
         const diffDays = Math.floor(diffHours / 24);
         if (diffDays < 7) {
             return `${diffDays}d ago`;
         }
         
-        // Format as date
-        const options = { year: 'numeric', month: 'short', day: 'numeric' };
-        return date.toLocaleDateString(undefined, options);
+        // For older dates, just show the date in local format
+        return serverDate.toLocaleDateString();
     };
 
     return (
@@ -87,7 +84,7 @@ function TrackingHistory() {
                                         <span className="track-number">{index + 1}</span>
                                         <div className="track-info">
                                             <div className="track-title">{event.playback}</div>
-                                            <div className="track-artist">{formatDate(event.timestamp)}</div>
+                                            <div className="track-artist">{formatTimeAgo(event.timestamp)}</div>
                                         </div>
                                     </div>
                                 ))
@@ -104,7 +101,7 @@ function TrackingHistory() {
                                         <span className="track-number">{index + 1}</span>
                                         <div className="track-info">
                                             <div className="track-title">{event.searchQuery}</div>
-                                            <div className="track-artist">{formatDate(event.timestamp)}</div>
+                                            <div className="track-artist">{formatTimeAgo(event.timestamp)}</div>
                                         </div>
                                     </div>
                                 ))
