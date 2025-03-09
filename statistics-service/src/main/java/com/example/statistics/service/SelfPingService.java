@@ -43,11 +43,15 @@ public class SelfPingService {
         }
         
         try {
-            logger.info("Executing self-ping to keep service alive");
+            logger.info("Executing self-ping to keep service alive on URL: {}", serviceUrl);
             String response = restTemplate.getForObject(serviceUrl, String.class);
-            logger.info("Self-ping successful: {}", response != null ? "Response received" : "No response");
+            if (response != null) {
+                logger.info("Self-ping successful. Response: {}", response.substring(0, Math.min(response.length(), 100)));
+            } else {
+                logger.warn("Self-ping completed but received null response");
+            }
         } catch (Exception e) {
-            logger.error("Error during self-ping: {}", e.getMessage());
+            logger.error("Error during self-ping to {}: {}", serviceUrl, e.getMessage());
         }
     }
 }
