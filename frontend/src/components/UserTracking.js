@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Alert } from 'react-bootstrap';
+import api from '../api';
 
 function UserTracking() {
   const [playback, setPlayback] = useState('');
@@ -9,7 +9,7 @@ function UserTracking() {
 
   const logPlayback = () => {
     if (!playback.trim()) return;
-    axios.post('/user-tracking/logPlayback', { playback })
+    api.post('/user-tracking/logPlayback', { playback })
       .then(response => {
         console.log('Playback logged:', response.data);
         setSuccessMessage('Playback logged successfully!');
@@ -23,7 +23,7 @@ function UserTracking() {
 
   const logSearch = () => {
     if (!search.trim()) return;
-    axios.post('/user-tracking/logSearch', { search })
+    api.post('/user-tracking/logSearch', { search })
       .then(response => {
         console.log('Search logged:', response.data);
         setSuccessMessage('Search logged successfully!');

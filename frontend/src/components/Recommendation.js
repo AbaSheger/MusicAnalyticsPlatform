@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Spinner } from 'react-bootstrap';
+import api from '../api';
 
 function Recommendation() {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/recommendation/getAIRecommendations/1')
+    api.get('/recommendation/getAIRecommendations/1')
       .then(response => {
         setRecommendations(response.data);
         setLoading(false);

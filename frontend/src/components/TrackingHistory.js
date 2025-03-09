@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Spinner, Tabs, Tab } from 'react-bootstrap';
+import api from '../api';
 
 function TrackingHistory() {
     const [playbacks, setPlaybacks] = useState([]);
@@ -9,8 +9,8 @@ function TrackingHistory() {
 
     useEffect(() => {
         Promise.all([
-            axios.get('/user-tracking/playbacks'),
-            axios.get('/user-tracking/searches')
+            api.get('/user-tracking/playbacks'),
+            api.get('/user-tracking/searches')
         ]).then(([playbackRes, searchRes]) => {
             setPlaybacks(playbackRes.data);
             setSearches(searchRes.data);

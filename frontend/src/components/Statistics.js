@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Spinner } from 'react-bootstrap';
+import api from '../api';
 
 function Statistics() {
   const [topTracks, setTopTracks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/statistics/topTracks')
+    api.get('/statistics/topTracks')
       .then(response => {
         setTopTracks(response.data);
         setLoading(false);
