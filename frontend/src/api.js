@@ -23,6 +23,12 @@ const api = axios.create({
 let isWakingUpServices = false;
 let useMockData = false;
 
+// In-memory storage for mock data when services are sleeping
+const tempMockData = {
+  playbackEvents: [...mockPlaybackEvents],
+  searchEvents: [...mockSearchEvents],
+};
+
 // Event emitter for wake-up state changes
 const wakeUpListeners = [];
 export const onWakeUpStateChange = (callback) => {
@@ -55,7 +61,13 @@ const notifyMockDataStateChange = (state) => {
 };
 
 // Add response interceptor for retry logic
-api.interceptors.response.use(null, async error => {
+api.interceptors.response.use(response => {
+  // If we get a successful response, make sure we're not using mock data
+  if (response && response.status >= 200 && response.status < 300) {
+    notifyMockDataStateChange(false);
+  }
+  return response;
+}, async error => {
   // If the error is due to server issues (503, 504, etc.)
   const isServerIssue = 
     error.response && (error.response.status >= 500 || error.response.status === 0) || 
@@ -81,12 +93,43 @@ api.interceptors.response.use(null, async error => {
       } else if (config.url.includes('/statistics/topTracks')) {
         return Promise.resolve({ data: mockTopTracks });
       } else if (config.url.includes('/user-tracking/playbacks')) {
-        return Promise.resolve({ data: mockPlaybackEvents });
+        return Promise.resolve({ data: tempMockData.playbackEvents });
       } else if (config.url.includes('/user-tracking/searches')) {
-        return Promise.resolve({ data: mockSearchEvents });
-      } else if (config.url.includes('/user-tracking/logPlayback') || config.url.includes('/user-tracking/logSearch')) {
-        // Mock successful logging responses
-        return Promise.resolve({ data: { status: 'success', message: 'Logged successfully (Mock)' } });
+        return Promise.resolve({ data: tempMockData.searchEvents });
+      } else if (config.url.includes('/user-tracking/logPlayback')) {
+        // Extract the playback data and add to our temporary mock storage
+        const playbackData = JSON.parse(config.data);
+        const newPlayback = {
+          id: tempMockData.playbackEvents.length + 1,
+          playback: playbackData.playback,
+          timestamp: new Date().toISOString()
+        };
+        tempMockData.playbackEvents.unshift(newPlayback); // Add to beginning of array
+        
+        // Mock successful logging response
+        return Promise.resolve({ 
+          data: { 
+            status: 'success', 
+            message: 'Playback logged successfully (Mock)' 
+          } 
+        });
+      } else if (config.url.includes('/user-tracking/logSearch')) {
+        // Extract the search data and add to our temporary mock storage
+        const searchData = JSON.parse(config.data);
+        const newSearch = {
+          id: tempMockData.searchEvents.length + 1,
+          searchQuery: searchData.search,
+          timestamp: new Date().toISOString()
+        };
+        tempMockData.searchEvents.unshift(newSearch); // Add to beginning of array
+        
+        // Mock successful logging response
+        return Promise.resolve({ 
+          data: { 
+            status: 'success', 
+            message: 'Search logged successfully (Mock)' 
+          } 
+        });
       }
       
       return Promise.reject(error);
@@ -115,9 +158,6 @@ api.interceptors.response.use(null, async error => {
     return api(config);
   }
   
-  // If we get a successful response, make sure we're not using mock data
-  notifyMockDataStateChange(false);
-  notifyWakeUpStateChange(false);
   return Promise.reject(error);
 });
 
@@ -142,5 +182,9 @@ api.interceptors.request.use(async config => {
 }, error => Promise.reject(error));
 
 export const isMockDataActive = () => useMockData;
+export const resetMockData = () => {
+  tempMockData.playbackEvents = [...mockPlaybackEvents];
+  tempMockData.searchEvents = [...mockSearchEvents];
+};
 
 export default api;
