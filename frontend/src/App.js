@@ -4,6 +4,7 @@ import Recommendation from './components/Recommendation';
 import Statistics from './components/Statistics';
 import UserTracking from './components/UserTracking';
 import TrackingHistory from './components/TrackingHistory';
+import WakeUpNotification from './components/WakeUpNotification';
 
 function NavLink({ to, children }) {
   const location = useLocation();
@@ -64,6 +65,9 @@ function App() {
         <footer>
           <p>&copy; 2025 Music Analytics Platform</p>
         </footer>
+        
+        {/* Service wake-up notification */}
+        <WakeUpNotification />
       </div>
     </Router>
   );
