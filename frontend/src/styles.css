@@ -309,6 +309,17 @@ button:hover {
   font-size: 0.875rem;
 }
 
+/* Empty state styling */
+.empty-state {
+  color: #b3b3b3;
+  text-align: center;
+  padding: 2rem;
+  font-style: italic;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;

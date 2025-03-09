@@ -22,20 +22,41 @@ function TrackingHistory() {
     }, []);
 
     const formatDate = (dateString) => {
+        // Parse the date string into a Date object
+        // The server returns ISO format dates
         const date = new Date(dateString);
         const now = new Date();
-        const diffMinutes = Math.floor((now - date) / (1000 * 60));
         
-        if (diffMinutes < 1) return 'Just now';
-        if (diffMinutes < 60) return `${diffMinutes}m ago`;
+        // Calculate the actual difference in milliseconds
+        const diffMs = now.getTime() - date.getTime();
+        const diffSeconds = Math.floor(diffMs / 1000);
         
+        // Less than a minute ago
+        if (diffSeconds < 60) {
+            return 'Just now';
+        }
+        
+        // Less than an hour ago
+        const diffMinutes = Math.floor(diffSeconds / 60);
+        if (diffMinutes < 60) {
+            return `${diffMinutes}m ago`;
+        }
+        
+        // Less than a day ago
         const diffHours = Math.floor(diffMinutes / 60);
-        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffHours < 24) {
+            return `${diffHours}h ago`;
+        }
         
+        // Less than a week ago
         const diffDays = Math.floor(diffHours / 24);
-        if (diffDays < 7) return `${diffDays}d ago`;
+        if (diffDays < 7) {
+            return `${diffDays}d ago`;
+        }
         
-        return date.toLocaleDateString();
+        // Format as date
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString(undefined, options);
     };
 
     return (
@@ -51,28 +72,36 @@ function TrackingHistory() {
                 <Tabs defaultActiveKey="playbacks" className="mb-3">
                     <Tab eventKey="playbacks" title="Recent Plays">
                         <div className="tracks-container">
-                            {playbacks.map((event, index) => (
-                                <div key={index} className="track-item">
-                                    <span className="track-number">{index + 1}</span>
-                                    <div className="track-info">
-                                        <div className="track-title">{event.playback}</div>
-                                        <div className="track-artist">{formatDate(event.timestamp)}</div>
+                            {playbacks.length === 0 ? (
+                                <div className="empty-state">No playback history yet</div>
+                            ) : (
+                                playbacks.map((event, index) => (
+                                    <div key={index} className="track-item">
+                                        <span className="track-number">{index + 1}</span>
+                                        <div className="track-info">
+                                            <div className="track-title">{event.playback}</div>
+                                            <div className="track-artist">{formatDate(event.timestamp)}</div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </Tab>
                     <Tab eventKey="searches" title="Search History">
                         <div className="tracks-container">
-                            {searches.map((event, index) => (
-                                <div key={index} className="track-item">
-                                    <span className="track-number">{index + 1}</span>
-                                    <div className="track-info">
-                                        <div className="track-title">{event.searchQuery}</div>
-                                        <div className="track-artist">{formatDate(event.timestamp)}</div>
+                            {searches.length === 0 ? (
+                                <div className="empty-state">No search history yet</div>
+                            ) : (
+                                searches.map((event, index) => (
+                                    <div key={index} className="track-item">
+                                        <span className="track-number">{index + 1}</span>
+                                        <div className="track-info">
+                                            <div className="track-title">{event.searchQuery}</div>
+                                            <div className="track-artist">{formatDate(event.timestamp)}</div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </Tab>
                 </Tabs>

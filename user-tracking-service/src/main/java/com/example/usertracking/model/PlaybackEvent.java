@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Entity
 public class PlaybackEvent {
@@ -15,7 +16,8 @@ public class PlaybackEvent {
     private LocalDateTime timestamp;
 
     public PlaybackEvent() {
-        this.timestamp = LocalDateTime.now();
+        // Use UTC time to ensure consistent timestamps across different server/client timezones
+        this.timestamp = LocalDateTime.now(ZoneOffset.UTC);
     }
 
     public PlaybackEvent(String playback) {
