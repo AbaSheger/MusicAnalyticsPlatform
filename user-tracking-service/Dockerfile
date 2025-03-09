@@ -3,8 +3,11 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
+# List files to debug
+RUN ls -la target/
 
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/target/user-tracking-service-0.0.1-SNAPSHOT.jar .
-CMD ["java", "-jar", "user-tracking-service-0.0.1-SNAPSHOT.jar"]
+# Use wildcard to match any jar file
+COPY --from=build /app/target/*.jar ./app.jar
+CMD ["java", "-jar", "app.jar"]
