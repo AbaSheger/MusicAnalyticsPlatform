@@ -14,17 +14,19 @@ spring:
           lowerCaseServiceId: true
       routes:
         - id: recommendation-service
-          uri: lb://recommendation-service
+          uri: ${RECOMMENDATION_SERVICE_URL:lb://recommendation-service}
           predicates:
             - Path=/recommendation/**
         - id: statistics-service
-          uri: lb://statistics-service
+          uri: ${STATISTICS_SERVICE_URL:lb://statistics-service}
           predicates:
             - Path=/statistics/**
         - id: user-tracking-service
-          uri: lb://user-tracking-service
+          uri: ${USER_TRACKING_SERVICE_URL:lb://user-tracking-service}
           predicates:
             - Path=/user-tracking/**
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
 
 eureka:
   client:
@@ -44,3 +46,36 @@ eureka:
   client:
     service-url:
       defaultZone: http://eureka-server:8761/eureka/
+
+# Production profile for cloud deployment (Render.com)
+---
+spring:
+  config:
+    activate:
+      on-profile: production
+  cloud:
+    gateway:
+      routes:
+        - id: recommendation-service
+          uri: ${RECOMMENDATION_SERVICE_URL}
+          predicates:
+            - Path=/recommendation/**
+        - id: statistics-service
+          uri: ${STATISTICS_SERVICE_URL}
+          predicates:
+            - Path=/statistics/**
+        - id: user-tracking-service
+          uri: ${USER_TRACKING_SERVICE_URL}
+          predicates:
+            - Path=/user-tracking/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+  instance:
+    hostname: ${RENDER_EXTERNAL_HOSTNAME}
+    non-secure-port-enabled: false
+    secure-port-enabled: true
+    secure-port: 443
+    prefer-ip-address: false
