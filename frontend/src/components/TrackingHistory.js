@@ -22,14 +22,21 @@ function TrackingHistory() {
     }, []);
 
     const formatDate = (dateString) => {
-        // Parse the date string into a Date object
-        // The server returns ISO format dates
+        if (!dateString) return 'Unknown date';
+        
+        // The server sends ISO format dates in UTC
         const date = new Date(dateString);
         const now = new Date();
         
-        // Calculate the actual difference in milliseconds
+        // Convert both to UTC timestamps in milliseconds for accurate comparison
         const diffMs = now.getTime() - date.getTime();
         const diffSeconds = Math.floor(diffMs / 1000);
+        
+        // Debug timestamp info - remove in production
+        console.log(`Date from server: ${dateString}`);
+        console.log(`Parsed as local: ${date.toString()}`);
+        console.log(`Now: ${now.toString()}`);
+        console.log(`Difference ms: ${diffMs}, seconds: ${diffSeconds}`);
         
         // Less than a minute ago
         if (diffSeconds < 60) {
