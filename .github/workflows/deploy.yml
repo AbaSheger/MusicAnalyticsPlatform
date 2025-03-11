@@ -18,10 +18,18 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        server-id: central # This will create settings.xml with these credentials
+        server-id: central
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
 
+    # Verify Maven configuration
+    - name: Debug Maven Configuration
+      run: |
+        echo "Verifying Maven configuration..."
+        echo "JAVA_HOME: $JAVA_HOME"
+        mvn -version
+        ls -la ~/.m2 || true
+        
     # Create local Maven settings with credentials
     - name: Setup Maven Settings
       run: |
@@ -45,7 +53,30 @@ jobs:
               <mirrorOf>central</mirrorOf>
             </mirror>
           </mirrors>
+          <profiles>
+            <profile>
+              <id>default</id>
+              <repositories>
+                <repository>
+                  <id>central</id>
+                  <url>https://repo1.maven.org/maven2</url>
+                  <releases>
+                    <enabled>true</enabled>
+                  </releases>
+                  <snapshots>
+                    <enabled>false</enabled>
+                  </snapshots>
+                </repository>
+              </repositories>
+            </profile>
+          </profiles>
+          <activeProfiles>
+            <activeProfile>default</activeProfile>
+          </activeProfiles>
         </settings>" > ~/.m2/settings.xml
+        
+        echo "Maven settings created. Verifying content:"
+        cat ~/.m2/settings.xml
 
     # Build with Maven using explicit credentials
     - name: Build with Maven
@@ -53,13 +84,41 @@ jobs:
         MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
       run: |
-        mvn -B -s ~/.m2/settings.xml clean install -DskipTests
+        echo "Starting Maven build..."
+        mvn -B -X -s ~/.m2/settings.xml clean install -DskipTests || {
+          echo "Maven build failed. Checking settings..."
+          ls -la ~/.m2
+          echo "Current directory contents:"
+          ls -la
+          exit 1
+        }
+
+    # Verify build artifacts
+    - name: Verify Build Artifacts
+      run: |
+        echo "Checking build artifacts..."
+        for service in api-gateway eureka-server recommendation-service statistics-service user-tracking-service; do
+          if [ -f "$service/target/$service-1.0-SNAPSHOT.jar" ]; then
+            echo "$service build successful"
+          else
+            echo "Error: $service build failed - JAR not found"
+            exit 1
+          }
+        done
 
     # Set up Docker buildx
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
-    # Login to Docker registry (Oracle Container Registry)
+    # Verify Docker setup
+    - name: Verify Docker Configuration
+      run: |
+        echo "Docker version:"
+        docker version
+        echo "Docker info:"
+        docker info
+
+    # Login to Oracle Container Registry
     - name: Log in to Oracle Container Registry
       uses: docker/login-action@v1
       with:
@@ -67,29 +126,52 @@ jobs:
         username: ${{ secrets.OCI_USERNAME }}
         password: ${{ secrets.OCI_AUTH_TOKEN }}
 
-    # Build and push Docker images with explicit environment variables
+    # Build and push Docker images with better error handling
     - name: Build and push Docker images
       env:
         REGISTRY: ${{ secrets.OCI_REGISTRY }}
         NAMESPACE: ${{ secrets.OCI_NAMESPACE }}
-        OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
-        OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
       run: |
-        # Verify Docker login state
-        docker login ${REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN}
+        echo "Building and pushing Docker images..."
         
-        # Build and push images
-        docker build -t ${REGISTRY}/${NAMESPACE}/api-gateway:latest -f api-gateway/Dockerfile .
-        docker build -t ${REGISTRY}/${NAMESPACE}/eureka-server:latest -f eureka-server/Dockerfile .
-        docker build -t ${REGISTRY}/${NAMESPACE}/recommendation-service:latest -f recommendation-service/Dockerfile .
-        docker build -t ${REGISTRY}/${NAMESPACE}/statistics-service:latest -f statistics-service/Dockerfile .
-        docker build -t ${REGISTRY}/${NAMESPACE}/user-tracking-service:latest -f user-tracking-service/Dockerfile .
+        # Function to build and push an image
+        build_and_push() {
+          local service=$1
+          echo "Processing $service..."
+          
+          # Build image
+          echo "Building $service image..."
+          docker build -t ${REGISTRY}/${NAMESPACE}/$service:latest -f $service/Dockerfile . || {
+            echo "Error building $service image"
+            return 1
+          }
+          
+          # Push image
+          echo "Pushing $service image..."
+          docker push ${REGISTRY}/${NAMESPACE}/$service:latest || {
+            echo "Error pushing $service image"
+            return 1
+          }
+          
+          echo "$service successfully built and pushed"
+          return 0
+        }
         
-        docker push ${REGISTRY}/${NAMESPACE}/api-gateway:latest
-        docker push ${REGISTRY}/${NAMESPACE}/eureka-server:latest
-        docker push ${REGISTRY}/${NAMESPACE}/recommendation-service:latest
-        docker push ${REGISTRY}/${NAMESPACE}/statistics-service:latest
-        docker push ${REGISTRY}/${NAMESPACE}/user-tracking-service:latest
+        # Process each service
+        services=("api-gateway" "eureka-server" "recommendation-service" "statistics-service" "user-tracking-service")
+        for service in "${services[@]}"; do
+          build_and_push $service || {
+            echo "Failed to process $service"
+            exit 1
+          }
+        done
+
+    # Logout from Docker registry
+    - name: Log out from Oracle Container Registry
+      if: always()
+      run: |
+        echo "Logging out from Docker registry..."
+        docker logout ${{ secrets.OCI_REGISTRY }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -103,16 +185,71 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    # Login to Oracle Container Registry for deployment
+    - name: Log in to Oracle Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ${{ secrets.OCI_REGISTRY }}
+        username: ${{ secrets.OCI_USERNAME }}
+        password: ${{ secrets.OCI_AUTH_TOKEN }}
+
+    # Verify VM connection before deployment
+    - name: Verify VM Connection
+      env:
+        ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
+      run: |
+        echo "Verifying VM connection..."
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key.pem
+        chmod 600 ssh_key.pem
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ssh_key.pem opc@${ORACLE_VM_IP} echo "VM connection successful" || {
+          echo "Failed to connect to VM"
+          exit 1
+        }
+
     - name: Deploy to Oracle VM
       env:
         ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
       run: |
+        echo "Starting deployment..."
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key.pem
         chmod 600 ssh_key.pem
         ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} << 'EOF'
-          cd ~/music-analytics/vm-deploy
-          docker login ${REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN}
-          docker-compose pull
-          docker-compose up -d
-        EOF
+          echo "Deploying to VM..."
+          cd ~/music-analytics/vm-deploy || {
+            echo "Failed to change directory"
+            exit 1
+          }
+          
+          echo "Logging into Docker registry..."
+          docker login ${REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} || {
+            echo "Docker login failed"
+            exit 1
+          }
+          
+          echo "Pulling latest images..."
+          docker-compose pull || {
+            echo "Failed to pull images"
+            docker logout ${REGISTRY}
+            exit 1
+          }
+          
+          echo "Starting services..."
+          docker-compose up -d || {
+            echo "Failed to start services"
+            docker logout ${REGISTRY}
+            exit 1
+          }
+          
+          echo "Logging out from Docker registry..."
+          docker logout ${REGISTRY}
+          
+          echo "Deployment completed successfully"
+EOF
         rm -f ssh_key.pem  # Clean up sensitive files
+
+    # Logout from Docker registry
+    - name: Log out from Oracle Container Registry
+      if: always()
+      run: |
+        echo "Final cleanup: Logging out from Docker registry..."
+        docker logout ${{ secrets.OCI_REGISTRY }}
