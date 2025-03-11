@@ -1,2 +1,3 @@
 com\example\statistics\controller\StatisticsController.class
+com\example\statistics\service\SelfPingService.class
 com\example\statistics\StatisticsServiceApplication.class

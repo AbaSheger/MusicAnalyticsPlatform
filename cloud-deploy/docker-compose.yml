@@ -1,0 +1,64 @@
+services:
+  recommendation-service:
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/recommendation-service:latest
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8762/eureka/
+    depends_on:
+      - eureka-server
+    volumes:
+      - recommendation-data:/data
+    restart: unless-stopped
+  
+  statistics-service:
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/statistics-service:latest
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8762/eureka/
+    depends_on:
+      - eureka-server
+    volumes:
+      - statistics-data:/data
+    restart: unless-stopped
+
+  user-tracking-service:
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/user-tracking-service:latest
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8762/eureka/
+    depends_on:
+      - eureka-server
+    volumes:
+      - user-tracking-data:/data
+    restart: unless-stopped
+
+  api-gateway:
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/api-gateway:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8762/eureka/
+    depends_on:
+      - eureka-server
+    restart: unless-stopped
+
+  eureka-server:
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/eureka-server:latest
+    ports:
+      - "8762:8762"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - SERVER_PORT=8762
+    restart: unless-stopped
+
+volumes:
+  recommendation-data:
+  statistics-data:
+  user-tracking-data:

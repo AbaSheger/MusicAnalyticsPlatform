@@ -1,2 +1,3 @@
+com\example\recommendation\service\SelfPingService.class
 com\example\recommendation\controller\RecommendationController.class
 com\example\recommendation\RecommendationServiceApplication.class

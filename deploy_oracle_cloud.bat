@@ -20,7 +20,6 @@ docker login %OCI_REGISTRY_URL% -u %OCI_USERNAME%
 REM Tag each service with the Oracle registry URL
 echo Tagging Docker images for Oracle Cloud Registry...
 set SERVICES=eureka-server recommendation-service statistics-service user-tracking-service api-gateway
-set PROJECT_NAME=music-analytics
 
 REM First build all the local images
 echo Building local Docker images...
@@ -31,22 +30,23 @@ for %%s in (%SERVICES%) do (
     cd ..
 )
 
-REM Now tag and push
+REM Now tag and push with simpler repository names (no project name folder)
+echo Tagging and pushing images...
 for %%s in (%SERVICES%) do (
     echo Tagging and pushing %%s...
-    docker tag %%s:latest %OCI_REGISTRY_URL%/%PROJECT_NAME%/%%s:latest
-    docker push %OCI_REGISTRY_URL%/%PROJECT_NAME%/%%s:latest
+    docker tag %%s:latest %OCI_REGISTRY_URL%/%%s:latest
+    docker push %OCI_REGISTRY_URL%/%%s:latest
 )
 
 REM Create deployment directory
 if not exist cloud-deploy mkdir cloud-deploy
 
-REM Create docker-compose file for cloud deployment
+REM Create docker-compose file for cloud deployment with simpler paths
 echo Creating cloud deployment docker-compose.yml file...
 (
 echo services:
 echo   recommendation-service:
-echo     image: %OCI_REGISTRY_URL%/%PROJECT_NAME%/recommendation-service:latest
+echo     image: %OCI_REGISTRY_URL%/recommendation-service:latest
 echo     ports:
 echo       - "8082:8082"
 echo     environment:
@@ -59,7 +59,7 @@ echo       - recommendation-data:/data
 echo     restart: unless-stopped
 echo.  
 echo   statistics-service:
-echo     image: %OCI_REGISTRY_URL%/%PROJECT_NAME%/statistics-service:latest
+echo     image: %OCI_REGISTRY_URL%/statistics-service:latest
 echo     ports:
 echo       - "8083:8083"
 echo     environment:
@@ -72,7 +72,7 @@ echo       - statistics-data:/data
 echo     restart: unless-stopped
 echo.
 echo   user-tracking-service:
-echo     image: %OCI_REGISTRY_URL%/%PROJECT_NAME%/user-tracking-service:latest
+echo     image: %OCI_REGISTRY_URL%/user-tracking-service:latest
 echo     ports:
 echo       - "8084:8084"
 echo     environment:
@@ -85,7 +85,7 @@ echo       - user-tracking-data:/data
 echo     restart: unless-stopped
 echo.
 echo   api-gateway:
-echo     image: %OCI_REGISTRY_URL%/%PROJECT_NAME%/api-gateway:latest
+echo     image: %OCI_REGISTRY_URL%/api-gateway:latest
 echo     ports:
 echo       - "8080:8080"
 echo     environment:
@@ -96,7 +96,7 @@ echo       - eureka-server
 echo     restart: unless-stopped
 echo.
 echo   eureka-server:
-echo     image: %OCI_REGISTRY_URL%/%PROJECT_NAME%/eureka-server:latest
+echo     image: %OCI_REGISTRY_URL%/eureka-server:latest
 echo     ports:
 echo       - "8762:8762"
 echo     environment:
@@ -112,7 +112,7 @@ echo   user-tracking-data:
 
 echo ==================================================
 echo Deployment preparation completed!
-echo Your Docker images have been pushed to %OCI_REGISTRY_URL%/%PROJECT_NAME%/
+echo Your Docker images have been pushed to %OCI_REGISTRY_URL%/
 echo Docker Compose file created in cloud-deploy directory
 echo.
 echo Next steps:
