@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 echo ===== Oracle Cloud Deployment: Music Analytics Platform =====
 
 echo Building application with Maven...
@@ -76,7 +77,7 @@ for %%s in (%SERVICES%) do (
     docker push %OCI_REGISTRY_URL%/%%s:latest
     
     REM Check if push succeeded
-    if %ERRORLEVEL% NEQ 0 (
+    if !ERRORLEVEL! NEQ 0 (
         echo Failed to push %%s. Make sure the repository "%%s" exists in Oracle Container Registry.
         echo You can create it at: Oracle Cloud Console -^> Developer Services -^> Container Registry
     ) else (
@@ -170,3 +171,4 @@ echo    ssh -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key opc@79.76.
 echo    docker login %OCI_REGISTRY_URL% -u %OCI_USERNAME%
 echo    docker-compose up -d
 echo ==================================================
+endlocal
