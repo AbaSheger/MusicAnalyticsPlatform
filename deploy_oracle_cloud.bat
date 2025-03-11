@@ -6,21 +6,21 @@ echo Building application with Maven...
 call mvn clean package -DskipTests -Dspring.profiles.active=cloud
 
 REM Set default values for Oracle Cloud
-set DEFAULT_OCI_REGISTRY_URL=eu-stockholm-1.ocir.io/axtmihzlro3c
-set DEFAULT_OCI_USERNAME=axtmihzlro3c/oracleidentitycloudservice/merebanglo@gmail.com
+set "DEFAULT_OCI_REGISTRY_URL=eu-stockholm-1.ocir.io/axtmihzlro3c"
+set "DEFAULT_OCI_USERNAME=axtmihzlro3c/oracleidentitycloudservice/merebanglo@gmail.com"
 
 REM Check for image registry URL
 if "%OCI_REGISTRY_URL%"=="" (
     echo Default Oracle Registry URL: %DEFAULT_OCI_REGISTRY_URL%
     set /p OCI_REGISTRY_URL=Enter your Oracle Cloud Registry URL (or press Enter for default): 
-    if "!OCI_REGISTRY_URL!"=="" set OCI_REGISTRY_URL=%DEFAULT_OCI_REGISTRY_URL%
+    if "!OCI_REGISTRY_URL!"=="" set "OCI_REGISTRY_URL=%DEFAULT_OCI_REGISTRY_URL%"
 )
 
 REM Check for image registry username
 if "%OCI_USERNAME%"=="" (
     echo Default Oracle Username: %DEFAULT_OCI_USERNAME%
     set /p OCI_USERNAME=Enter your Oracle Cloud Username (or press Enter for default): 
-    if "!OCI_USERNAME!"=="" set OCI_USERNAME=%DEFAULT_OCI_USERNAME%
+    if "!OCI_USERNAME!"=="" set "OCI_USERNAME=%DEFAULT_OCI_USERNAME%"
 )
 
 echo.
@@ -36,7 +36,7 @@ echo Using username: %OCI_USERNAME%
 docker login %OCI_REGISTRY_URL% -u %OCI_USERNAME%
 
 REM Check login success
-if %ERRORLEVEL% NEQ 0 (
+if !ERRORLEVEL! NEQ 0 (
     echo.
     echo ERROR: Failed to authenticate to Oracle Cloud Registry
     echo Please check:
