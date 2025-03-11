@@ -79,7 +79,7 @@ api.interceptors.response.use(response => {
     
     // Don't retry if we've already retried or if maxRetries is set and exceeded
     config.retryCount = config.retryCount || 0;
-    const maxRetries = 2;
+    const maxRetries = 3;
     
     if (config.retryCount >= maxRetries) {
       notifyWakeUpStateChange(false);
@@ -114,7 +114,6 @@ api.interceptors.response.use(response => {
           } 
         });
       } else if (config.url.includes('/user-tracking/logSearch')) {
-        // Extract the search data and add to our temporary mock storage
         const searchData = JSON.parse(config.data);
         const newSearch = {
           id: tempMockData.searchEvents.length + 1,
@@ -138,12 +137,12 @@ api.interceptors.response.use(response => {
     // Increase retry count
     config.retryCount += 1;
     
-    // Exponential backoff delay with a bit of randomness
-    const backoff = Math.pow(2, config.retryCount) * 1000 + Math.random() * 1000;
+    // Backoff strategy
+    const backoff = Math.pow(1.5, config.retryCount) * 1000 + Math.random() * 1000;
     
     // Show loading state or notification to user on first retry
     if (config.retryCount === 1) {
-      console.log('Services are waking up. This may take a moment...');
+      console.log('Services are starting up. This may take a moment...');
       notifyWakeUpStateChange(true);
     }
     
@@ -168,7 +167,7 @@ api.interceptors.request.use(async config => {
     try {
       const response = await fetch(`${API_BASE_URL}/statistics/topTracks`, { 
         method: 'HEAD',
-        timeout: 2000
+        timeout: 3000
       });
       if (response.ok) {
         notifyMockDataStateChange(false);
