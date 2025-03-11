@@ -2,7 +2,8 @@
 FROM amazoncorretto:17-alpine as builder
 WORKDIR /app
 COPY eureka-server.jar app.jar
-RUN jlink \
+RUN apk add --no-cache binutils \
+    && jlink \
     --add-modules java.base,java.logging,java.xml,java.sql,java.naming,java.desktop,java.security.jgss,java.instrument,jdk.unsupported \
     --strip-debug \
     --no-man-pages \
