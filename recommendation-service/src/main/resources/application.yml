@@ -53,7 +53,7 @@ eureka:
   instance:
     prefer-ip-address: true
 
-# Production profile for cloud deployment (Render.com)
+# Production profile for cloud deployment (Oracle Cloud)
 ---
 spring:
   config:
@@ -75,7 +75,7 @@ spring:
 app:
   self-ping:
     enabled: true
-    service-url: https://${RENDER_EXTERNAL_HOSTNAME}/recommendation/topTracks
+    service-url: http://${ORACLE_EXTERNAL_HOSTNAME}:8080/recommendation/topTracks
 
 eureka:
   client:
@@ -84,10 +84,9 @@ eureka:
     fetch-registry: true
     register-with-eureka: true
   instance:
-    hostname: ${RENDER_EXTERNAL_HOSTNAME}
-    non-secure-port-enabled: false
-    secure-port-enabled: true
-    secure-port: 443
+    hostname: ${ORACLE_EXTERNAL_HOSTNAME}
+    non-secure-port-enabled: true
+    secure-port-enabled: false
     prefer-ip-address: false
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90

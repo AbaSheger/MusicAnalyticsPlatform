@@ -53,7 +53,7 @@ eureka:
     service-url:
       defaultZone: http://eureka-server:8761/eureka/
 
-# Production profile for cloud deployment (Render.com)
+# Production profile for cloud deployment (Oracle Cloud)
 ---
 spring:
   config:
@@ -79,7 +79,7 @@ spring:
 app:
   self-ping:
     enabled: true
-    service-url: https://${RENDER_EXTERNAL_HOSTNAME}/actuator/health
+    service-url: http://${ORACLE_EXTERNAL_HOSTNAME}:8080/actuator/health
 
 eureka:
   client:
@@ -88,8 +88,7 @@ eureka:
     fetch-registry: true
     register-with-eureka: true
   instance:
-    hostname: ${RENDER_EXTERNAL_HOSTNAME}
-    non-secure-port-enabled: false
-    secure-port-enabled: true
-    secure-port: 443
+    hostname: ${ORACLE_EXTERNAL_HOSTNAME}
+    non-secure-port-enabled: true
+    secure-port-enabled: false
     prefer-ip-address: false

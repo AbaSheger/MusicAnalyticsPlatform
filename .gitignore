@@ -21,8 +21,23 @@ target/
 
 # Environment files with sensitive information
 .env
+.env.*
+!.env.template
+set_oracle_env.bat
 *.pem
 *.key
+
+# Additional sensitive files
+**/application-*.yml
+**/application-*.properties
+!**/application.yml
+!**/application.properties
+**/secrets/
+**/*.password
+**/*.secret
+**/*.token
+**/credentials.*
+**/private-key.*
 
 # Build and deployment artifacts
 vm-deploy/
@@ -48,3 +63,13 @@ Thumbs.db
 # Node modules for frontend
 frontend/node_modules/
 frontend/build/
+frontend/.env.*
+!frontend/.env.template
+
+# Ignore SSH configuration directory
+/.ssh
+
+# Oracle Cloud specific
+**/ssh-key-*.key
+**/oracle/*.key
+**/oracle/*.pem

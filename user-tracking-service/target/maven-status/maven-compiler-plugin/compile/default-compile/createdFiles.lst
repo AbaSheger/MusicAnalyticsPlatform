@@ -1,6 +1,0 @@
-com\example\usertracking\model\PlaybackEvent.class
-com\example\usertracking\repository\PlaybackRepository.class
-com\example\usertracking\repository\SearchRepository.class
-com\example\usertracking\UserTrackingServiceApplication.class
-com\example\usertracking\controller\UserTrackingController.class
-com\example\usertracking\model\SearchEvent.class

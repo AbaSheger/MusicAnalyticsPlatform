@@ -14,12 +14,18 @@ if "%OCI_REGISTRY_URL%"=="" (
     echo    set SSH_KEY_PATH=path-to-ssh-key
     echo    set VM_USER=vm-username
     echo    set VM_IP=vm-ip-address
+    echo    set ORACLE_EXTERNAL_HOSTNAME=your-oracle-vm-hostname
     echo Or create a .env file and run: load_env.bat
     exit /b 1
 )
 
 if "%OCI_USERNAME%"=="" (
     echo ERROR: OCI_USERNAME environment variable is not set
+    exit /b 1
+)
+
+if "%ORACLE_EXTERNAL_HOSTNAME%"=="" (
+    echo ERROR: ORACLE_EXTERNAL_HOSTNAME environment variable is not set
     exit /b 1
 )
 
@@ -85,59 +91,104 @@ echo     image: %OCI_REGISTRY_URL%/recommendation-service:latest
 echo     ports:
 echo       - "8082:8082"
 echo     environment:
-echo       - SPRING_PROFILES_ACTIVE=cloud
+echo       - SPRING_PROFILES_ACTIVE=production
 echo       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8762/eureka/
+echo       - ORACLE_EXTERNAL_HOSTNAME=%ORACLE_EXTERNAL_HOSTNAME%
+echo       - RECOMMENDATION_SERVICE_URL=http://recommendation-service:8082
 echo     depends_on:
 echo       - eureka-server
 echo     volumes:
 echo       - recommendation-data:/data
 echo     restart: unless-stopped
+echo     healthcheck:
+echo       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+echo       interval: 30s
+echo       timeout: 10s
+echo       retries: 3
+echo       start_period: 40s
 echo.  
 echo   statistics-service:
 echo     image: %OCI_REGISTRY_URL%/statistics-service:latest
 echo     ports:
 echo       - "8083:8083"
 echo     environment:
-echo       - SPRING_PROFILES_ACTIVE=cloud
+echo       - SPRING_PROFILES_ACTIVE=production
 echo       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8762/eureka/
+echo       - ORACLE_EXTERNAL_HOSTNAME=%ORACLE_EXTERNAL_HOSTNAME%
+echo       - STATISTICS_SERVICE_URL=http://statistics-service:8083
 echo     depends_on:
 echo       - eureka-server
 echo     volumes:
 echo       - statistics-data:/data
 echo     restart: unless-stopped
+echo     healthcheck:
+echo       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+echo       interval: 30s
+echo       timeout: 10s
+echo       retries: 3
+echo       start_period: 40s
 echo.
 echo   user-tracking-service:
 echo     image: %OCI_REGISTRY_URL%/user-tracking-service:latest
 echo     ports:
 echo       - "8084:8084"
 echo     environment:
-echo       - SPRING_PROFILES_ACTIVE=cloud
+echo       - SPRING_PROFILES_ACTIVE=production
 echo       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8762/eureka/
+echo       - ORACLE_EXTERNAL_HOSTNAME=%ORACLE_EXTERNAL_HOSTNAME%
+echo       - USER_TRACKING_SERVICE_URL=http://user-tracking-service:8084
 echo     depends_on:
 echo       - eureka-server
 echo     volumes:
 echo       - user-tracking-data:/data
 echo     restart: unless-stopped
+echo     healthcheck:
+echo       test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+echo       interval: 30s
+echo       timeout: 10s
+echo       retries: 3
+echo       start_period: 40s
 echo.
 echo   api-gateway:
 echo     image: %OCI_REGISTRY_URL%/api-gateway:latest
 echo     ports:
 echo       - "8080:8080"
 echo     environment:
-echo       - SPRING_PROFILES_ACTIVE=cloud
+echo       - SPRING_PROFILES_ACTIVE=production
 echo       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8762/eureka/
+echo       - ORACLE_EXTERNAL_HOSTNAME=%ORACLE_EXTERNAL_HOSTNAME%
+echo       - RECOMMENDATION_SERVICE_URL=http://recommendation-service:8082
+echo       - STATISTICS_SERVICE_URL=http://statistics-service:8083
+echo       - USER_TRACKING_SERVICE_URL=http://user-tracking-service:8084
 echo     depends_on:
 echo       - eureka-server
 echo     restart: unless-stopped
+echo     healthcheck:
+echo       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+echo       interval: 30s
+echo       timeout: 10s
+echo       retries: 3
+echo       start_period: 40s
 echo.
 echo   eureka-server:
 echo     image: %OCI_REGISTRY_URL%/eureka-server:latest
 echo     ports:
 echo       - "8762:8762"
 echo     environment:
-echo       - SPRING_PROFILES_ACTIVE=cloud
+echo       - SPRING_PROFILES_ACTIVE=production
 echo       - SERVER_PORT=8762
 echo     restart: unless-stopped
+echo     healthcheck:
+echo       test: ["CMD", "curl", "-f", "http://localhost:8762/actuator/health"]
+echo       interval: 30s
+echo       timeout: 10s
+echo       retries: 3
+echo       start_period: 40s
+echo.
+echo networks:
+echo   default:
+echo     driver: bridge
+echo     internal: false
 echo.
 echo volumes:
 echo   recommendation-data:
