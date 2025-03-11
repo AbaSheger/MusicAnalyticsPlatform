@@ -6,25 +6,32 @@ echo Creating deployment package directory...
 if exist vm-deploy rmdir /s /q vm-deploy
 mkdir vm-deploy
 
-REM Copy Docker-related files
+REM Create directories first
+mkdir vm-deploy\eureka-server
+mkdir vm-deploy\api-gateway
+mkdir vm-deploy\recommendation-service
+mkdir vm-deploy\statistics-service
+mkdir vm-deploy\user-tracking-service
+
+REM Copy Docker-related files - note the /y flag to suppress prompts
 echo Copying Docker files...
-xcopy /s /i eureka-server\Dockerfile vm-deploy\eureka-server\Dockerfile
-xcopy /s /i api-gateway\Dockerfile vm-deploy\api-gateway\Dockerfile
-xcopy /s /i recommendation-service\Dockerfile vm-deploy\recommendation-service\Dockerfile
-xcopy /s /i statistics-service\Dockerfile vm-deploy\statistics-service\Dockerfile
-xcopy /s /i user-tracking-service\Dockerfile vm-deploy\user-tracking-service\Dockerfile
+copy /y eureka-server\Dockerfile vm-deploy\eureka-server\Dockerfile
+copy /y api-gateway\Dockerfile vm-deploy\api-gateway\Dockerfile
+copy /y recommendation-service\Dockerfile vm-deploy\recommendation-service\Dockerfile
+copy /y statistics-service\Dockerfile vm-deploy\statistics-service\Dockerfile
+copy /y user-tracking-service\Dockerfile vm-deploy\user-tracking-service\Dockerfile
 
 REM Copy JAR files (built artifacts)
 echo Copying application JAR files...
-xcopy /s /i eureka-server\target\eureka-server-1.0-SNAPSHOT.jar vm-deploy\eureka-server\eureka-server.jar
-xcopy /s /i api-gateway\target\api-gateway-1.0-SNAPSHOT.jar vm-deploy\api-gateway\api-gateway.jar
-xcopy /s /i recommendation-service\target\recommendation-service-1.0-SNAPSHOT.jar vm-deploy\recommendation-service\recommendation-service.jar
-xcopy /s /i statistics-service\target\statistics-service-1.0-SNAPSHOT.jar vm-deploy\statistics-service\statistics-service.jar
-xcopy /s /i user-tracking-service\target\user-tracking-service-1.0-SNAPSHOT.jar vm-deploy\user-tracking-service\user-tracking-service.jar
+copy /y eureka-server\target\eureka-server-1.0-SNAPSHOT.jar vm-deploy\eureka-server\eureka-server.jar
+copy /y api-gateway\target\api-gateway-1.0-SNAPSHOT.jar vm-deploy\api-gateway\api-gateway.jar
+copy /y recommendation-service\target\recommendation-service-1.0-SNAPSHOT.jar vm-deploy\recommendation-service\recommendation-service.jar
+copy /y statistics-service\target\statistics-service-1.0-SNAPSHOT.jar vm-deploy\statistics-service\statistics-service.jar
+copy /y user-tracking-service\target\user-tracking-service-1.0-SNAPSHOT.jar vm-deploy\user-tracking-service\user-tracking-service.jar
 
 REM Copy the direct docker-compose file
 echo Copying docker-compose file...
-copy cloud-deploy\docker-compose.direct.yml vm-deploy\docker-compose.yml
+copy /y cloud-deploy\docker-compose.direct.yml vm-deploy\docker-compose.yml
 
 REM Create a script for deployment on the VM
 echo Creating VM deployment script...
