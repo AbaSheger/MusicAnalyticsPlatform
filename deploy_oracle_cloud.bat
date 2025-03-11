@@ -5,22 +5,22 @@ echo ===== Oracle Cloud Deployment: Music Analytics Platform =====
 echo Building application with Maven...
 call mvn clean package -DskipTests -Dspring.profiles.active=cloud
 
-REM Set default values for Oracle Cloud
-set "DEFAULT_OCI_REGISTRY_URL=eu-stockholm-1.ocir.io/axtmihzlro3c"
-set "DEFAULT_OCI_USERNAME=axtmihzlro3c/oracleidentitycloudservice/merebanglo@gmail.com"
-
-REM Check for image registry URL
+REM Check for required environment variables
 if "%OCI_REGISTRY_URL%"=="" (
-    echo Default Oracle Registry URL: %DEFAULT_OCI_REGISTRY_URL%
-    set /p OCI_REGISTRY_URL=Enter your Oracle Cloud Registry URL (or press Enter for default): 
-    if "!OCI_REGISTRY_URL!"=="" set "OCI_REGISTRY_URL=%DEFAULT_OCI_REGISTRY_URL%"
+    echo ERROR: OCI_REGISTRY_URL environment variable is not set
+    echo Please set the required environment variables using:
+    echo    set OCI_REGISTRY_URL=your-registry-url
+    echo    set OCI_USERNAME=your-username
+    echo    set SSH_KEY_PATH=path-to-ssh-key
+    echo    set VM_USER=vm-username
+    echo    set VM_IP=vm-ip-address
+    echo Or create a .env file and run: load_env.bat
+    exit /b 1
 )
 
-REM Check for image registry username
 if "%OCI_USERNAME%"=="" (
-    echo Default Oracle Username: %DEFAULT_OCI_USERNAME%
-    set /p OCI_USERNAME=Enter your Oracle Cloud Username (or press Enter for default): 
-    if "!OCI_USERNAME!"=="" set "OCI_USERNAME=%DEFAULT_OCI_USERNAME%"
+    echo ERROR: OCI_USERNAME environment variable is not set
+    exit /b 1
 )
 
 echo.
@@ -39,16 +39,7 @@ REM Check login success
 if !ERRORLEVEL! NEQ 0 (
     echo.
     echo ERROR: Failed to authenticate to Oracle Cloud Registry
-    echo Please check:
-    echo 1. Your username format: Should be exactly like "axtmihzlro3c/oracleidentitycloudservice/merebanglo@gmail.com"
-    echo 2. Your password: Should be an Auth Token, not your regular password
-    echo 3. Make sure you've created the repositories in Oracle Container Registry:
-    echo    - eureka-server
-    echo    - recommendation-service
-    echo    - statistics-service
-    echo    - user-tracking-service
-    echo    - api-gateway
-    echo.
+    echo Please check your credentials and try again
     exit /b 1
 )
 
@@ -68,28 +59,24 @@ for %%s in (%SERVICES%) do (
     cd ..
 )
 
-REM Now tag and push with simpler repository names (no project name folder)
+REM Now tag and push
 echo Tagging and pushing images...
 for %%s in (%SERVICES%) do (
     echo Tagging %%s...
     docker tag %%s:latest %OCI_REGISTRY_URL%/%%s:latest
     echo Pushing %%s to %OCI_REGISTRY_URL%/%%s:latest...
     docker push %OCI_REGISTRY_URL%/%%s:latest
-    
-    REM Check if push succeeded
     if !ERRORLEVEL! NEQ 0 (
-        echo Failed to push %%s. Make sure the repository "%%s" exists in Oracle Container Registry.
-        echo You can create it at: Oracle Cloud Console -^> Developer Services -^> Container Registry
-    ) else (
-        echo Successfully pushed %%s
+        echo Failed to push %%s
+        exit /b 1
     )
+    echo Successfully pushed %%s
     echo.
 )
 
 REM Create deployment directory
 if not exist cloud-deploy mkdir cloud-deploy
 
-REM Create docker-compose file for cloud deployment with simpler paths
 echo Creating cloud deployment docker-compose.yml file...
 (
 echo services:
@@ -163,11 +150,11 @@ echo Deployment preparation completed!
 echo Docker Compose file created in cloud-deploy directory
 echo.
 echo Next steps:
-echo 1. Copy the docker-compose.yml file from cloud-deploy to your VM:
-echo    scp -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key cloud-deploy\docker-compose.yml opc@79.76.48.165:~/
+echo 1. Copy the docker-compose.yml file to your VM:
+echo    scp -i %SSH_KEY_PATH% cloud-deploy\docker-compose.yml %VM_USER%@%VM_IP%:~/
 echo.
 echo 2. SSH into your VM and run:
-echo    ssh -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key opc@79.76.48.165
+echo    ssh -i %SSH_KEY_PATH% %VM_USER%@%VM_IP%
 echo    docker login %OCI_REGISTRY_URL% -u %OCI_USERNAME%
 echo    docker-compose up -d
 echo ==================================================

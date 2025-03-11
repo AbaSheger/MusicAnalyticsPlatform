@@ -1,9 +1,18 @@
 @echo off
 echo ===== Oracle Cloud Deployment: Music Analytics Platform =====
 
-REM Set Oracle Cloud values
-set OCI_REGISTRY_URL=eu-stockholm-1.ocir.io/axtmihzlro3c
-set OCI_USERNAME=axtmihzlro3c/oracleidentitycloudservice/merebanglo@gmail.com
+REM Check for required environment variables
+if "%OCI_REGISTRY_URL%"=="" (
+    echo ERROR: OCI_REGISTRY_URL environment variable is not set
+    echo Please set it using: set OCI_REGISTRY_URL=your-registry-url
+    exit /b 1
+)
+
+if "%OCI_USERNAME%"=="" (
+    echo ERROR: OCI_USERNAME environment variable is not set
+    echo Please set it using: set OCI_USERNAME=your-username
+    exit /b 1
+)
 
 echo Using:
 echo - Registry URL: %OCI_REGISTRY_URL%
@@ -118,11 +127,11 @@ echo Deployment preparation completed!
 echo Docker Compose file created in cloud-deploy directory
 echo.
 echo Next steps:
-echo 1. Copy the docker-compose.yml file to your Oracle VM:
-echo    scp -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key cloud-deploy\docker-compose.yml opc@79.76.48.165:~/
+echo 1. Copy the docker-compose.yml file to your VM:
+echo    scp -i %SSH_KEY_PATH% cloud-deploy\docker-compose.yml %VM_USER%@%VM_IP%:~/
 echo.
 echo 2. SSH into your VM and run:
-echo    ssh -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key opc@79.76.48.165
+echo    ssh -i %SSH_KEY_PATH% %VM_USER%@%VM_IP%
 echo    docker login %OCI_REGISTRY_URL% -u %OCI_USERNAME%
 echo    docker-compose up -d
 echo ==================================================

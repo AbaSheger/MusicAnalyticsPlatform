@@ -1,0 +1,50 @@
+# Maven build files
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Eclipse files
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code files
+.vscode/
+
+# Environment files with sensitive information
+.env
+*.pem
+*.key
+
+# Build and deployment artifacts
+vm-deploy/
+cloud-deploy/
+
+# Logs
+logs/
+*.log
+
+# Docker files
+.docker/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Skip temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Node modules for frontend
+frontend/node_modules/
+frontend/build/

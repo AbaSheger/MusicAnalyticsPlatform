@@ -1,6 +1,17 @@
 @echo off
 echo ===== Preparing Music Analytics Platform for VM Deployment =====
 
+REM Check for required environment variables
+if "%VM_IP%"=="" (
+    echo ERROR: VM_IP environment variable is not set
+    echo Please set the required environment variables using:
+    echo    set VM_IP=your-vm-ip
+    echo    set VM_USER=your-vm-username
+    echo    set SSH_KEY_PATH=path-to-ssh-key
+    echo Or create a .env file and run: load_env.bat
+    exit /b 1
+)
+
 REM Create a deployment directory
 echo Creating deployment package directory...
 if exist vm-deploy rmdir /s /q vm-deploy
@@ -68,10 +79,10 @@ echo ===== Deployment package prepared! =====
 echo.
 echo Next steps:
 echo 1. Transfer the deployment package to your VM:
-echo    scp -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key -r vm-deploy opc@79.76.48.165:~/music-analytics
+echo    scp -i %SSH_KEY_PATH% -r vm-deploy %VM_USER%@%VM_IP%:~/music-analytics
 echo.
 echo 2. SSH into your VM and deploy:
-echo    ssh -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key opc@79.76.48.165
+echo    ssh -i %SSH_KEY_PATH% %VM_USER%@%VM_IP%
 echo    cd ~/music-analytics
 echo    chmod +x deploy.sh
 echo    ./deploy.sh
