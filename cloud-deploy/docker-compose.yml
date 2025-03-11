@@ -1,6 +1,6 @@
 services:
   recommendation-service:
-    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/recommendation-service:latest
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/recommendation-service:latest
     ports:
       - "8082:8082"
     environment:
@@ -13,7 +13,7 @@ services:
     restart: unless-stopped
   
   statistics-service:
-    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/statistics-service:latest
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/statistics-service:latest
     ports:
       - "8083:8083"
     environment:
@@ -26,7 +26,7 @@ services:
     restart: unless-stopped
 
   user-tracking-service:
-    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/user-tracking-service:latest
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/user-tracking-service:latest
     ports:
       - "8084:8084"
     environment:
@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
 
   api-gateway:
-    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/api-gateway:latest
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/api-gateway:latest
     ports:
       - "8080:8080"
     environment:
@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
 
   eureka-server:
-    image: eu-stockholm-1.ocir.io/axtmihzlro3c/music-analytics/eureka-server:latest
+    image: eu-stockholm-1.ocir.io/axtmihzlro3c/eureka-server:latest
     ports:
       - "8762:8762"
     environment:
