@@ -4,14 +4,22 @@ echo ===== Oracle Cloud Deployment: Music Analytics Platform =====
 echo Building application with Maven...
 call mvn clean package -DskipTests -Dspring.profiles.active=cloud
 
+REM Set default values for Oracle Cloud
+set DEFAULT_OCI_REGISTRY_URL=eu-stockholm-1.ocir.io/axtmihzlro3c
+set DEFAULT_OCI_USERNAME=axtmihzlro3c/oracleidentitycloudservice/merebanglo@gmail.com
+
 REM Check for image registry URL
 if "%OCI_REGISTRY_URL%"=="" (
-    set /p OCI_REGISTRY_URL=Enter your Oracle Cloud Registry URL (e.g., eu-stockholm-1.ocir.io/axtmihzlro3c): 
+    echo Default Oracle Registry URL: %DEFAULT_OCI_REGISTRY_URL%
+    set /p OCI_REGISTRY_URL=Enter your Oracle Cloud Registry URL (or press Enter for default): 
+    if "!OCI_REGISTRY_URL!"=="" set OCI_REGISTRY_URL=%DEFAULT_OCI_REGISTRY_URL%
 )
 
 REM Check for image registry username
 if "%OCI_USERNAME%"=="" (
-    set /p OCI_USERNAME=Enter your Oracle Cloud Username (format must be: tenancy-namespace/oracleidentitycloudservice/email): 
+    echo Default Oracle Username: %DEFAULT_OCI_USERNAME%
+    set /p OCI_USERNAME=Enter your Oracle Cloud Username (or press Enter for default): 
+    if "!OCI_USERNAME!"=="" set OCI_USERNAME=%DEFAULT_OCI_USERNAME%
 )
 
 echo.
@@ -31,9 +39,14 @@ if %ERRORLEVEL% NEQ 0 (
     echo.
     echo ERROR: Failed to authenticate to Oracle Cloud Registry
     echo Please check:
-    echo 1. Your username format: Should be exactly like "axtmihzlro3c/oracleidentitycloudservice/your-email@example.com"
+    echo 1. Your username format: Should be exactly like "axtmihzlro3c/oracleidentitycloudservice/merebanglo@gmail.com"
     echo 2. Your password: Should be an Auth Token, not your regular password
-    echo 3. Make sure you've created the repositories in Oracle Container Registry
+    echo 3. Make sure you've created the repositories in Oracle Container Registry:
+    echo    - eureka-server
+    echo    - recommendation-service
+    echo    - statistics-service
+    echo    - user-tracking-service
+    echo    - api-gateway
     echo.
     exit /b 1
 )
@@ -150,9 +163,10 @@ echo Docker Compose file created in cloud-deploy directory
 echo.
 echo Next steps:
 echo 1. Copy the docker-compose.yml file from cloud-deploy to your VM:
-echo    scp -i path\to\ssh-key cloud-deploy\docker-compose.yml opc@your-vm-ip:~/
+echo    scp -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key cloud-deploy\docker-compose.yml opc@79.76.48.165:~/
 echo.
 echo 2. SSH into your VM and run:
+echo    ssh -i C:\Users\abbas\Downloads\oracle\ssh-key-2025-03-10.key opc@79.76.48.165
 echo    docker login %OCI_REGISTRY_URL% -u %OCI_USERNAME%
 echo    docker-compose up -d
 echo ==================================================
