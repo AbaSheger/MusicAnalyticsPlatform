@@ -47,34 +47,6 @@ jobs:
               <password>${{ secrets.MAVEN_PASSWORD }}</password>
             </server>
           </servers>
-          <mirrors>
-            <mirror>
-              <id>central</id>
-              <name>Maven Central</name>
-              <url>https://repo1.maven.org/maven2/</url>
-              <mirrorOf>central</mirrorOf>
-            </mirror>
-          </mirrors>
-          <profiles>
-            <profile>
-              <id>default</id>
-              <repositories>
-                <repository>
-                  <id>central</id>
-                  <url>https://repo1.maven.org/maven2</url>
-                  <releases>
-                    <enabled>true</enabled>
-                  </releases>
-                  <snapshots>
-                    <enabled>false</enabled>
-                  </snapshots>
-                </repository>
-              </repositories>
-            </profile>
-          </profiles>
-          <activeProfiles>
-            <activeProfile>default</activeProfile>
-          </activeProfiles>
         </settings>' > ~/.m2/settings.xml
 
     - name: Build with Maven
@@ -83,11 +55,8 @@ jobs:
         MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
       run: |
         echo "Starting Maven build..."
-        mvn -B -X -s ~/.m2/settings.xml clean install -DskipTests || {
-          echo "Maven build failed. Checking settings..."
-          ls -la ~/.m2
-          echo "Current directory contents:"
-          ls -la
+        mvn -B -s ~/.m2/settings.xml clean install -DskipTests || {
+          echo "Maven build failed."
           exit 1
         }
 
@@ -95,12 +64,12 @@ jobs:
       run: |
         echo "Checking build artifacts..."
         for service in api-gateway eureka-server recommendation-service statistics-service user-tracking-service; do
-          if [ -f "$service/target/$service-0.0.1-SNAPSHOT.jar" ]; then
-            echo "$service build successful"
-          else
-            echo "Error: $service build failed - JAR not found"
+          JAR_PATH=$(find $service/target -type f -name "*.jar")
+          if [ -z "$JAR_PATH" ]; then
+            echo "Error: JAR not found for $service"
             exit 1
           fi
+          echo "$service build successful: $JAR_PATH"
         done
 
     - name: Set up Docker Buildx
@@ -130,8 +99,17 @@ jobs:
         
         for service in "${services[@]}"; do
           echo "Building $service..."
-          docker build -t ${REGISTRY}/${NAMESPACE}/$service:latest -f $service/Dockerfile . || exit 1
-          docker push ${REGISTRY}/${NAMESPACE}/$service:latest || exit 1
+
+          # Find the JAR file dynamically
+          JAR_FILE=$(find $service/target -type f -name "*.jar" | head -n 1)
+
+          if [ -z "$JAR_FILE" ]; then
+            echo "Error: No JAR file found for $service"
+            exit 1
+          fi
+
+          docker build -t ${REGISTRY}/${NAMESPACE}/$service:latest --build-arg JAR_FILE=$JAR_FILE -f $service/Dockerfile .
+          docker push ${REGISTRY}/${NAMESPACE}/$service:latest
           echo "$service successfully built and pushed."
         done
 
@@ -178,8 +156,12 @@ jobs:
         ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} << 'EOF'
           cd ~/music-analytics/vm-deploy || exit 1
           docker login ${REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} || exit 1
-          docker-compose pull || exit 1
-          docker-compose up -d || exit 1
+          docker pull ${REGISTRY}/${NAMESPACE}/api-gateway:latest
+          docker pull ${REGISTRY}/${NAMESPACE}/eureka-server:latest
+          docker pull ${REGISTRY}/${NAMESPACE}/recommendation-service:latest
+          docker pull ${REGISTRY}/${NAMESPACE}/statistics-service:latest
+          docker pull ${REGISTRY}/${NAMESPACE}/user-tracking-service:latest
+          docker-compose up -d
           docker logout ${REGISTRY}
           echo "Deployment completed successfully"
         EOF
