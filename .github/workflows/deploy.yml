@@ -157,20 +157,16 @@ jobs:
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key.pem
         chmod 600 ssh_key.pem
         
-        # Export variables for use in SSH command
-        export REGISTRY_VAL=${REGISTRY}
-        export USERNAME_VAL=${OCI_USERNAME}
-        export TOKEN_VAL=${OCI_AUTH_TOKEN}
+        # Using SSH with heredoc for commands
+        ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} << 'ENDSSH'
+        cd ~/music-analytics/vm-deploy || exit 1
+        docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} -p ${{ secrets.OCI_AUTH_TOKEN }} || exit 1
+        docker-compose pull || exit 1
+        docker-compose up -d || exit 1
+        docker logout ${{ secrets.OCI_REGISTRY }}
+        echo "Deployment completed successfully"
+        ENDSSH
         
-        # Use EOF instead of 'EOF' to allow variable expansion
-        ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} <<EOF
-          cd ~/music-analytics/vm-deploy || exit 1
-          docker login ${REGISTRY_VAL} -u ${USERNAME_VAL} -p ${TOKEN_VAL} || exit 1
-          docker-compose pull || exit 1
-          docker-compose up -d || exit 1
-          docker logout ${REGISTRY_VAL}
-          echo "Deployment completed successfully"
-EOF
         rm -f ssh_key.pem
 
     - name: Log out from Oracle Container Registry
