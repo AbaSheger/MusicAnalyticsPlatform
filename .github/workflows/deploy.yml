@@ -12,6 +12,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    env:
+      REGISTRY: ${{ secrets.OCI_REGISTRY }}
+      OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
+      OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
 
     steps:
     - name: Checkout code
@@ -104,10 +109,14 @@ jobs:
 
     - name: Log in to Oracle Container Registry
       uses: docker/login-action@v1
+      env:
+        DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
+        DOCKER_USERNAME: ${{ secrets.OCI_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.OCI_AUTH_TOKEN }}
       with:
-        registry: ${{ secrets.OCI_REGISTRY }}
-        username: ${{ secrets.OCI_USERNAME }}
-        password: ${{ secrets.OCI_AUTH_TOKEN }}
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ env.DOCKER_USERNAME }}
+        password: ${{ env.DOCKER_PASSWORD }}
 
     - name: Build and push Docker images
       env:
@@ -145,6 +154,9 @@ jobs:
       REGISTRY: ${{ secrets.OCI_REGISTRY }}
       OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
       OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
+      DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
+      DOCKER_USERNAME: ${{ secrets.OCI_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.OCI_AUTH_TOKEN }}
 
     steps:
     - name: Checkout code
@@ -153,9 +165,9 @@ jobs:
     - name: Log in to Oracle Container Registry
       uses: docker/login-action@v1
       with:
-        registry: ${{ secrets.OCI_REGISTRY }}
-        username: ${{ secrets.OCI_USERNAME }}
-        password: ${{ secrets.OCI_AUTH_TOKEN }}
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ env.DOCKER_USERNAME }}
+        password: ${{ env.DOCKER_PASSWORD }}
 
     - name: Verify VM Connection
       env:
@@ -169,21 +181,25 @@ jobs:
     - name: Deploy to Oracle VM
       env:
         ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
-        REGISTRY: ${{ secrets.OCI_REGISTRY }}
-        OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
-        OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
+        DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
+        DOCKER_USERNAME: ${{ secrets.OCI_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.OCI_AUTH_TOKEN }}
       run: |
         echo "Starting deployment..."
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key.pem
         chmod 600 ssh_key.pem
         
-        # Using SSH with heredoc for commands
-        ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} << 'ENDSSH'
+        # Export variables for SSH session
+        export DOCKER_REGISTRY
+        export DOCKER_USERNAME
+        export DOCKER_PASSWORD
+        
+        ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} << ENDSSH
         cd ~/music-analytics/vm-deploy || exit 1
-        docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} -p ${{ secrets.OCI_AUTH_TOKEN }} || exit 1
+        docker login \${DOCKER_REGISTRY} -u \${DOCKER_USERNAME} -p \${DOCKER_PASSWORD} || exit 1
         docker-compose pull || exit 1
         docker-compose up -d || exit 1
-        docker logout ${{ secrets.OCI_REGISTRY }}
+        docker logout \${DOCKER_REGISTRY}
         echo "Deployment completed successfully"
         ENDSSH
         
