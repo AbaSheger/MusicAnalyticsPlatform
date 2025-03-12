@@ -79,7 +79,7 @@ jobs:
           if [ -z "$JAR_PATH" ]; then
             echo "Error: JAR not found for $service"
             exit 1
-          fi
+          }
           echo "$service build successful: $JAR_PATH"
         done
         
@@ -175,22 +175,17 @@ jobs:
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ssh_key.pem opc@${ORACLE_VM_IP} echo "VM connection successful" || exit 1
 
     - name: Deploy to Oracle VM
-      env:
-        ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
-        DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
-        DOCKER_USERNAME: ${{ secrets.OCI_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.OCI_AUTH_TOKEN }}
       run: |
         echo "Starting deployment..."
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key.pem
         chmod 600 ssh_key.pem
         
-        ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} << ENDSSH
+        ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${{ secrets.ORACLE_VM_IP }} << 'ENDSSH'
         cd ~/music-analytics/vm-deploy || exit 1
-        echo "\${DOCKER_PASSWORD}" | docker login \${DOCKER_REGISTRY} -u \${DOCKER_USERNAME} --password-stdin || exit 1
+        echo "${{ secrets.OCI_AUTH_TOKEN }}" | docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} --password-stdin || exit 1
         docker-compose pull || exit 1
         docker-compose up -d || exit 1
-        docker logout \${DOCKER_REGISTRY}
+        docker logout ${{ secrets.OCI_REGISTRY }}
         echo "Deployment completed successfully"
         ENDSSH
         
