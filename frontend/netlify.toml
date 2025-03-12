@@ -2,6 +2,9 @@
   publish = "build"
   command = "npm run build"
 
+[context.production.environment]
+  REACT_APP_API_BASE_URL = "http://79.76.48.165:8080"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
