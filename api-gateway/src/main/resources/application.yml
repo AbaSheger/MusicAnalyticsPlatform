@@ -11,7 +11,7 @@ spring:
       discovery:
         locator:
           enabled: true
-          lowerCaseServiceId: true
+          lower-case-service-id: true
       routes:
         - id: recommendation-service
           uri: ${RECOMMENDATION_SERVICE_URL:lb://recommendation-service}
@@ -32,6 +32,8 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
   instance:
     prefer-ip-address: true
 
@@ -39,7 +41,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: "*"
+  endpoint:
+    gateway:
+      enabled: true
 
 # Docker profile
 ---
@@ -91,4 +96,3 @@ eureka:
     hostname: ${ORACLE_EXTERNAL_HOSTNAME}
     non-secure-port-enabled: true
     secure-port-enabled: false
-    prefer-ip-address: false
