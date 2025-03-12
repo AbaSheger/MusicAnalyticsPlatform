@@ -95,7 +95,7 @@ jobs:
       run: |
         echo "Checking build artifacts..."
         for service in api-gateway eureka-server recommendation-service statistics-service user-tracking-service; do
-          if [ -f "$service/target/$service-1.0-SNAPSHOT.jar" ]; then
+          if [ -f "$service/target/$service-0.0.1-SNAPSHOT.jar" ]; then
             echo "$service build successful"
           else
             echo "Error: $service build failed - JAR not found"
