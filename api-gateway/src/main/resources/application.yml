@@ -17,14 +17,20 @@ spring:
           uri: ${RECOMMENDATION_SERVICE_URL:lb://recommendation-service}
           predicates:
             - Path=/recommendation/**
+          filters:
+            - RewritePath=/recommendation(?<segment>/?.*), /recommendation$\{segment}
         - id: statistics-service
           uri: ${STATISTICS_SERVICE_URL:lb://statistics-service}
           predicates:
             - Path=/statistics/**
+          filters:
+            - RewritePath=/statistics(?<segment>/?.*), /statistics$\{segment}
         - id: user-tracking-service
           uri: ${USER_TRACKING_SERVICE_URL:lb://user-tracking-service}
           predicates:
             - Path=/user-tracking/**
+          filters:
+            - RewritePath=/user-tracking(?<segment>/?.*), /user-tracking$\{segment}
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
 
@@ -71,14 +77,20 @@ spring:
           uri: ${RECOMMENDATION_SERVICE_URL}
           predicates:
             - Path=/recommendation/**
+          filters:
+            - RewritePath=/recommendation(?<segment>/?.*), /recommendation$\{segment}
         - id: statistics-service
           uri: ${STATISTICS_SERVICE_URL}
           predicates:
             - Path=/statistics/**
+          filters:
+            - RewritePath=/statistics(?<segment>/?.*), /statistics$\{segment}
         - id: user-tracking-service
           uri: ${USER_TRACKING_SERVICE_URL}
           predicates:
             - Path=/user-tracking/**
+          filters:
+            - RewritePath=/user-tracking(?<segment>/?.*), /user-tracking$\{segment}
 
 # Self-ping configuration to keep the service alive
 app:

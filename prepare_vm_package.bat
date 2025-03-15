@@ -72,7 +72,7 @@ echo docker-compose up -d
 echo.
 echo echo "Services started! You can access:"
 echo echo "- API Gateway: http://localhost:8080"
-echo echo "- Eureka Server: http://localhost:8762"
+echo echo "- Eureka Server: http://localhost:8761"
 ) > vm-deploy\deploy.sh
 
 echo ===== Deployment package prepared! =====
