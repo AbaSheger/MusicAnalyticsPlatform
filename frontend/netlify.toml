@@ -13,5 +13,6 @@
   to = "/index.html"
   status = 200
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# Remove the Next.js plugin line below
+# [[plugins]]
+#   package = "@netlify/plugin-nextjs"
