@@ -4,6 +4,12 @@ import Recommendation from './components/Recommendation';
 import Statistics from './components/Statistics';
 import UserTracking from './components/UserTracking';
 import TrackingHistory from './components/TrackingHistory';
+import api from './api';  // Import the api module
+
+// Get the API_BASE_URL from process.env or default to your VM IP
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL 
+  ? `https://${process.env.REACT_APP_API_BASE_URL.replace('https://', '')}`
+  : 'https://79.76.48.165';
 
 //function to handle the click event on the nav links
 function NavLink({ to, children }) {
