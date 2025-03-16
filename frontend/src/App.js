@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Recommendation from './components/Recommendation';
 import Statistics from './components/Statistics';
 import UserTracking from './components/UserTracking';
 import TrackingHistory from './components/TrackingHistory';
+
 //function to handle the click event on the nav links
 function NavLink({ to, children }) {
   const location = useLocation();
@@ -38,6 +39,8 @@ function NavLink({ to, children }) {
 }
 
 function App() {
+  const [showSSLWarning, setShowSSLWarning] = useState(true);
+
   return (
     <Router>
       <div className="App">
@@ -53,6 +56,14 @@ function App() {
           </ul>
         </nav>
         <main>
+          {showSSLWarning && (
+            <div className="ssl-warning">
+              <p>This site uses a self-signed certificate. If you see empty data, please visit 
+                 <a href={API_BASE_URL} target="_blank" rel="noopener noreferrer">the API directly</a> 
+                 and accept the certificate warning.</p>
+              <button onClick={() => setShowSSLWarning(false)}>Dismiss</button>
+            </div>
+          )}
           <Routes>
             <Route path="/recommendation" element={<Recommendation />} />
             <Route path="/statistics" element={<Statistics />} />

@@ -2,6 +2,9 @@
   publish = "build"
   command = "npm run build"
 
+[build.environment]
+  NODE_OPTIONS = "--max-old-space-size=4096"
+
 [context.production.environment]
   REACT_APP_API_BASE_URL = "https://79.76.48.165"
 
@@ -9,3 +12,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
