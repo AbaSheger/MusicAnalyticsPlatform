@@ -13,7 +13,6 @@ env:
   REGISTRY: ${{ secrets.OCI_REGISTRY }}
   OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
   OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
-  VM_IP: ${{ secrets.VM_IP }}
 
 jobs:
   build:
@@ -80,13 +79,13 @@ jobs:
           if [ -z "$JAR_PATH" ]; then
             echo "Error: JAR not found for $service"
             exit 1
-          fi
+          }
           echo "$service build successful: $JAR_PATH"
         done
         
         # Special handling for user-tracking-service which might have a different version
         UT_JAR_PATH=$(find user-tracking-service -name "*.jar" | grep -v "\.original" | head -n 1)
-        if [ -z "$UT_JAR_PATH" ]; then
+        if [ -z "$UT_JAR_PATH"]; then
           echo "Creating empty JAR for user-tracking-service to continue workflow"
           # Create minimal valid JAR file
           mkdir -p user-tracking-service/target/classes
@@ -145,7 +144,7 @@ jobs:
 
     - name: Build frontend
       env:
-        REACT_APP_API_BASE_URL: http://${{ secrets.VM_IP }}:8080
+        REACT_APP_API_BASE_URL: https://${{ secrets.ORACLE_VM_IP }}
       run: |
         cd frontend
         npm ci
@@ -177,7 +176,7 @@ jobs:
 
     - name: Verify VM Connection
       env:
-        ORACLE_VM_IP: ${{ secrets.VM_IP }}
+        ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
       run: |
         echo "Verifying VM connection..."
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key.pem
@@ -186,7 +185,7 @@ jobs:
 
     - name: Deploy to Oracle VM
       env:
-        ORACLE_VM_IP: ${{ secrets.VM_IP }}
+        ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
         SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
         DOCKER_USERNAME: ${{ secrets.OCI_USERNAME }}
@@ -200,7 +199,7 @@ jobs:
         echo "${{ secrets.OCI_AUTH_TOKEN }}" | docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} --password-stdin || exit 1
         
         # Set environment variables for docker-compose
-        export VM_IP=${{ secrets.VM_IP }}
+        export ORACLE_EXTERNAL_HOSTNAME=${{ secrets.ORACLE_VM_IP }}
         export DOCKER_REGISTRY=${{ secrets.OCI_REGISTRY }}
         
         docker-compose pull || exit 1

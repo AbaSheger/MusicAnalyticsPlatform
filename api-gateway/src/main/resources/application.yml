@@ -103,12 +103,6 @@ spring:
           filters:
             - RewritePath=/user-tracking(?<segment>/?.*), /user-tracking$\{segment}
 
-# Self-ping configuration to keep the service alive
-app:
-  self-ping:
-    enabled: true
-    service-url: http://${ORACLE_EXTERNAL_HOSTNAME}:8080/actuator/health
-
 eureka:
   client:
     service-url:
@@ -119,3 +113,4 @@ eureka:
     hostname: ${ORACLE_EXTERNAL_HOSTNAME}
     non-secure-port-enabled: true
     secure-port-enabled: false
+

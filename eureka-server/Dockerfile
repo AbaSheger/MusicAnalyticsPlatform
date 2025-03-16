@@ -28,7 +28,7 @@ USER spring:spring
 
 # Configure health check - updated to include double quotes around command
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD wget -q --spider "http://localhost:8762/actuator/health" || exit 1
+    CMD wget -q --spider "http://localhost:8761/actuator/health" || exit 1
 
-EXPOSE 8762
+EXPOSE 8761
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "/app.jar"]

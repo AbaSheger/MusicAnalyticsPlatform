@@ -3,10 +3,9 @@
   command = "npm run build"
 
 [context.production.environment]
-  REACT_APP_API_BASE_URL = "http://79.76.48.165:8080"
+  REACT_APP_API_BASE_URL = "https://79.76.48.165"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  

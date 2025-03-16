@@ -72,10 +72,7 @@ spring:
         web-allow-others: true
 
 # Self-ping configuration to keep the service alive
-app:
-  self-ping:
-    enabled: true
-    service-url: http://${ORACLE_EXTERNAL_HOSTNAME}:8080/recommendation/topTracks
+
 
 eureka:
   client:

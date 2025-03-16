@@ -1,5 +1,5 @@
 server:
-  port: 8762
+  port: 8761
 
 spring:
   application:
@@ -30,12 +30,6 @@ spring:
     activate:
       on-profile: production
 
-# Self-ping configuration to keep the service alive
-app:
-  self-ping:
-    enabled: true
-    service-url: https://${RENDER_EXTERNAL_HOSTNAME}/eureka/
-
 eureka:
   instance:
     hostname: ${RENDER_EXTERNAL_HOSTNAME}
@@ -43,3 +37,4 @@ eureka:
     secure-port-enabled: true
     secure-port: 443
     prefer-ip-address: false
+
