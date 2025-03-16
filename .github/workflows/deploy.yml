@@ -185,7 +185,48 @@ jobs:
           export ORACLE_EXTERNAL_HOSTNAME=${{ secrets.ORACLE_VM_IP }}
           export DOCKER_REGISTRY=${{ secrets.OCI_REGISTRY }}
           docker-compose pull || exit 1
-          docker-compose up -d || exit 1
+          docker-compose up -d || exit 1          server {
+              listen 443 ssl;
+              server_name _;
+              
+              ssl_certificate /etc/nginx/ssl/nginx.crt;
+              ssl_certificate_key /etc/nginx/ssl/nginx.key;
+              
+              # Enable detailed logging
+              access_log /var/log/nginx/music-analytics-access.log;
+              error_log /var/log/nginx/music-analytics-error.log;
+              
+              location / {
+                  # CORS headers inside location block
+                  add_header 'Access-Control-Allow-Origin' 'https://musicanalytics.netlify.app' always;
+                  add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+                  add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+                  
+                  # Proxy settings
+                  proxy_pass http://localhost:8080;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  
+                  # Handle OPTIONS requests
+                  if ($request_method = 'OPTIONS') {
+                      add_header 'Access-Control-Allow-Origin' 'https://musicanalytics.netlify.app' always;
+                      add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+                      add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+                      add_header 'Access-Control-Max-Age' 1728000;
+                      add_header 'Content-Type' 'text/plain charset=UTF-8';
+                      add_header 'Content-Length' 0;
+                      return 204;
+                  }
+              }
+          }
+          
+          server {
+              listen 80;
+              server_name _;
+              return 301 https://$host$request_uri;
+          }
           docker logout ${{ secrets.OCI_REGISTRY }}
           echo "Deployment completed successfully"
           EOF
