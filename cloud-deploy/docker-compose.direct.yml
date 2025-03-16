@@ -6,15 +6,17 @@ services:
     ports:
       - "8761:8761"
     environment:
-      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_PROFILES_ACTIVE=production  # Changed from production to production
       - SERVER_PORT=8761
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/
+      - ORACLE_EXTERNAL_HOSTNAME=${ORACLE_EXTERNAL_HOSTNAME}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps/ || exit 0"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 0"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
 
   # API Gateway depends on healthy Eureka server
   api-gateway:
@@ -23,7 +25,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_PROFILES_ACTIVE=production
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -37,7 +39,7 @@ services:
     ports:
       - "8082:8082"
     environment:
-      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_PROFILES_ACTIVE=production
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -45,6 +47,8 @@ services:
     volumes:
       - recommendation-data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps/ || exit 0"]
 
   statistics-service:
     build:
@@ -52,7 +56,7 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_PROFILES_ACTIVE=production
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -60,6 +64,8 @@ services:
     volumes:
       - statistics-data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps/ || exit 0"]
 
   user-tracking-service:
     build:
@@ -67,7 +73,7 @@ services:
     ports:
       - "8084:8084"
     environment:
-      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_PROFILES_ACTIVE=production
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -75,6 +81,8 @@ services:
     volumes:
       - user-tracking-data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps/ || exit 0"]
 
 volumes:
   recommendation-data:
