@@ -23,9 +23,14 @@ public class ApiGatewayApplication {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(Arrays.asList("https://musicanalytics.netlify.app", "*"));
+        corsConfig.setAllowedOrigins(Arrays.asList(
+            "https://musicanalytics.netlify.app", 
+            "https://romantic-snake-simple.ngrok-free.app",
+            "*"
+        ));
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(Arrays.asList("*"));
+        corsConfig.setAllowCredentials(true); // Add this line
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
