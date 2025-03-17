@@ -12,9 +12,26 @@ const api = axios.create({
   timeout: 60000,
 });
 
-// Add error handling for certificate issues
+// Add error handling for certificate issues and HTML responses
 api.interceptors.response.use(
-  response => response,
+  response => {
+    // Check if the response is HTML instead of JSON (Ngrok warning page)
+    if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
+      console.warn('Received HTML instead of JSON, falling back to mock data');
+      // Extract the URL path to determine which mock data to return
+      const path = response.config.url;
+      if (path.includes('/recommendation/getAIRecommendations')) {
+        return { data: mockRecommendations };
+      } else if (path.includes('/statistics/topTracks')) {
+        return { data: mockTopTracks };
+      } else if (path.includes('/user-tracking/playbacks')) {
+        return { data: mockPlaybackEvents };
+      } else if (path.includes('/user-tracking/searches')) {
+        return { data: mockSearchEvents };
+      }
+    }
+    return response;
+  },
   error => {
     console.warn('API error:', error);
     // Return mock data based on the URL path
