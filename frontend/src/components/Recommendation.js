@@ -5,15 +5,26 @@ import api from '../api';
 function Recommendation() {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     api.get('/recommendation/getAIRecommendations/1')
       .then(response => {
-        setRecommendations(response.data);
+        // Ensure we have a valid array of recommendations
+        if (Array.isArray(response.data)) {
+          setRecommendations(response.data);
+        } else {
+          console.warn('API response is not an array:', response.data);
+          setError(true);
+          // Create an empty array to avoid mapping errors
+          setRecommendations([]);
+        }
         setLoading(false);
       })
       .catch(error => {
         console.error('There was an error fetching the AI-generated recommendations!', error);
+        setError(true);
+        setRecommendations([]);
         setLoading(false);
       });
   }, []);
@@ -29,15 +40,26 @@ function Recommendation() {
         </div>
       ) : (
         <div className="tracks-container">
-          {recommendations.map((recommendation, index) => (
-            <div key={index} className="track-item">
-              <span className="track-number">{index + 1}</span>
-              <div className="track-info">
-                <div className="track-title">{recommendation.split(' - ')[0]}</div>
-                <div className="track-artist">{recommendation.split(' - ')[1]}</div>
-              </div>
+          {error && (
+            <div className="alert alert-warning">
+              Unable to load recommendations from server.
             </div>
-          ))}
+          )}
+          {recommendations.length === 0 && !error ? (
+            <div className="alert alert-info">
+              No recommendations available at this time.
+            </div>
+          ) : (
+            recommendations.map((recommendation, index) => (
+              <div key={index} className="track-item">
+                <span className="track-number">{index + 1}</span>
+                <div className="track-info">
+                  <div className="track-title">{recommendation.split(' - ')[0] || recommendation}</div>
+                  <div className="track-artist">{recommendation.split(' - ')[1] || ''}</div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
