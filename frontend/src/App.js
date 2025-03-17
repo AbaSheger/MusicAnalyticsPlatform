@@ -63,11 +63,16 @@ function App() {
         </nav>
         <main>
           {showSSLWarning && (
-            <div className="ssl-warning">
-              <p>This site uses a self-signed certificate. If you see empty data, please visit 
-                 <a href={API_BASE_URL} target="_blank" rel="noopener noreferrer">the API directly</a> 
-                 and accept the certificate warning.</p>
-              <button onClick={() => setShowSSLWarning(false)}>Dismiss</button>
+            <div className="ssl-warning" style={{background: '#ffebee', padding: '15px', borderRadius: '5px', marginBottom: '20px'}}>
+              <h4 style={{color: '#c62828'}}>⚠️ Certificate Warning</h4>
+              <p>This site uses a self-signed certificate. <strong>You must accept the certificate first by:</strong></p>
+              <ol>
+                <li>Click this link: <a href={API_BASE_URL} target="_blank" rel="noopener noreferrer">API Server ({API_BASE_URL})</a></li>
+                <li>In your browser, click "Advanced" or "Details" when warned</li>
+                <li>Select "Proceed anyway" or "Accept Risk and Continue"</li>
+                <li>Return to this page and refresh</li>
+              </ol>
+              <button onClick={() => setShowSSLWarning(false)} style={{marginTop: '10px'}}>I've Done This</button>
             </div>
           )}
           <Routes>
