@@ -27,6 +27,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - ORACLE_EXTERNAL_HOSTNAME=music-analytics.abenezeranglo.uk
     depends_on:
       eureka-server:
         condition: service_healthy
