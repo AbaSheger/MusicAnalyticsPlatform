@@ -86,6 +86,20 @@ spring:
       on-profile: production
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - https://musicanalytics.netlify.app
+              - https://music-analytics.abenezeranglo.uk
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
       routes:
         - id: recommendation-service
           uri: ${RECOMMENDATION_SERVICE_URL}
