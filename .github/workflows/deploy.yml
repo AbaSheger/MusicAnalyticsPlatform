@@ -87,7 +87,7 @@ jobs:
             if [ -z "$JAR_PATH" ]; then
               echo "Error: JAR not found for $service"
               exit 1
-            fi
+            }
             echo "$service build successful: $JAR_PATH"
           done
 
@@ -185,20 +185,32 @@ jobs:
           echo "$SSH_KEY" > ssh_key.pem
           chmod 600 ssh_key.pem
           
-          # Create directory structure on VM (no need for nginx directory anymore)
+          # Create directory structure on VM
           ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "mkdir -p ~/music-analytics/vm-deploy"
           
           # Copy Docker Compose file to VM
           scp -o StrictHostKeyChecking=no -i ssh_key.pem cloud-deploy/docker-compose.direct.yml opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/docker-compose.yml
           
-          # Deploy Docker services with correct environment variables
+          # Deploy Docker services with correct environment variables and proper startup sequence
           ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "cd ~/music-analytics/vm-deploy && \
             docker login ${DOCKER_REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} && \
             export ORACLE_EXTERNAL_HOSTNAME=music-analytics.abenezeranglo.uk && \
             export EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ && \
             export DOCKER_REGISTRY=${DOCKER_REGISTRY} && \
+            # Stop and remove existing containers in reverse order
+            docker-compose down --remove-orphans && \
+            # Remove old containers and unused images
+            docker container prune -f && \
+            docker image prune -f && \
+            # Pull latest images
             docker-compose pull && \
-            docker-compose up -d && \
+            # Start services with proper dependency handling
+            docker-compose up -d eureka-server && \
+            echo 'Waiting for Eureka server to be healthy...' && \
+            timeout 300 bash -c 'until docker-compose ps eureka-server | grep -q "(healthy)"; do sleep 5; done' && \
+            docker-compose up -d api-gateway recommendation-service statistics-service user-tracking-service && \
+            # Verify all services are running
+            docker-compose ps && \
             docker logout ${DOCKER_REGISTRY}"
 
           rm -f ssh_key.pem

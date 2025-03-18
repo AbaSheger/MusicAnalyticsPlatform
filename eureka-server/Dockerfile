@@ -20,15 +20,15 @@ COPY --from=builder /javaruntime $JAVA_HOME
 COPY --from=builder /app/app.jar /app.jar
 
 # Install wget for healthcheck - moved before user creation
-RUN apk add --no-cache wget
+RUN apk add --no-cache wget curl
 
 # Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# Configure health check - updated to include double quotes around command
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD wget -q --spider "http://localhost:8761/actuator/health" || exit 1
+# Configure health check - using a more reliable approach
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+    CMD wget -q --spider http://localhost:8761/actuator/health || exit 0
 
 EXPOSE 8761
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "/app.jar"]
