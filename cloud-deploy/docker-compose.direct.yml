@@ -13,11 +13,11 @@ services:
       - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 0"]
-      interval: 15s
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health || exit 0"]
+      interval: 30s
       timeout: 10s
-      retries: 20
-      start_period: 60s
+      retries: 3
+      start_period: 40s
 
   # API Gateway depends on healthy Eureka server
   api-gateway:
@@ -35,6 +35,12 @@ services:
       eureka-server:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Microservices depend on healthy Eureka server
   recommendation-service:
@@ -53,7 +59,11 @@ services:
       - recommendation-data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps/ || exit 0"]
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   statistics-service:
     build:
@@ -71,7 +81,11 @@ services:
       - statistics-data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps/ || exit 0"]
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   user-tracking-service:
     build:
@@ -89,7 +103,11 @@ services:
       - user-tracking-data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps/ || exit 0"]
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   recommendation-data:

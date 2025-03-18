@@ -18,6 +18,9 @@ FROM openjdk:11-jre-slim
 # Set the working directory inside the container
 WORKDIR /app
 
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Copy the built JAR file from the build stage
 COPY --from=build /app/target/recommendation-service-1.0-SNAPSHOT.jar app.jar
 
