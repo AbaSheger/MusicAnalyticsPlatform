@@ -10,7 +10,6 @@ services:
       - SERVER_PORT=8761
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/
       - ORACLE_EXTERNAL_HOSTNAME=${ORACLE_EXTERNAL_HOSTNAME}
-      - RENDER_EXTERNAL_HOSTNAME=disabled
       - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
     restart: unless-stopped
     healthcheck:

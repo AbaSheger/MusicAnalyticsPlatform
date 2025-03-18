@@ -71,8 +71,6 @@ spring:
       settings:
         web-allow-others: true
 
-
-
 eureka:
   client:
     service-url:
