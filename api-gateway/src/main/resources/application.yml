@@ -11,7 +11,9 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "*"
+            allowedOrigins:
+              - https://musicanalytics.netlify.app
+              - https://music-analytics.abenezeranglo.uk
             allowedMethods:
               - GET
               - POST
@@ -19,6 +21,7 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
+            allowCredentials: true
       discovery:
         locator:
           enabled: true

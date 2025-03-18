@@ -23,8 +23,8 @@ public class ApiGatewayApplication {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.setAllowedOrigins(Arrays.asList(
             "https://musicanalytics.netlify.app", 
-            "https://music-analytics.abenezeranglo.uk",
-            "*"
+            "https://music-analytics.abenezeranglo.uk"
+            // Remove "*" here as it's incompatible with allowCredentials=true
         ));
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(Arrays.asList("*"));
