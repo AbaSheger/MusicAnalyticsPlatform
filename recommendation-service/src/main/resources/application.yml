@@ -71,8 +71,6 @@ spring:
       settings:
         web-allow-others: true
 
-# Self-ping configuration to keep the service alive
-
 
 eureka:
   client:
