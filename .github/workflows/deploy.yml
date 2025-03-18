@@ -81,7 +81,7 @@ jobs:
             if [ -z "$JAR_PATH" ]; then
               echo "Error: JAR not found for $service"
               exit 1
-            }
+            fi
             echo "$service build successful: $JAR_PATH"
           done
 
