@@ -22,12 +22,23 @@ public class ApiGatewayApplication {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.addAllowedOrigin("https://musicanalytics.netlify.app");
-        corsConfig.addAllowedOrigin("https://music-analytics.abenezeranglo.uk");
-        corsConfig.addAllowedOrigin("http://localhost:3000");
+        
+        // Get allowed origins from environment or use defaults
+        String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+        if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
+            Arrays.stream(allowedOrigins.split(","))
+                  .forEach(corsConfig::addAllowedOrigin);
+        } else {
+            corsConfig.addAllowedOrigin("https://musicanalytics.netlify.app");
+            corsConfig.addAllowedOrigin("https://music-analytics.abenezeranglo.uk");
+            if (!isProduction()) {
+                corsConfig.addAllowedOrigin("http://localhost:3000");
+            }
+        }
+        
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-        corsConfig.setAllowedHeaders(Collections.singletonList("*"));
-        corsConfig.setExposedHeaders(Collections.singletonList("*"));
+        corsConfig.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Origin"));
+        corsConfig.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         corsConfig.setAllowCredentials(true);
         corsConfig.setMaxAge(3600L);
         
@@ -35,5 +46,10 @@ public class ApiGatewayApplication {
         source.registerCorsConfiguration("/**", corsConfig);
         
         return new CorsWebFilter(source);
+    }
+
+    private boolean isProduction() {
+        String profile = System.getenv("SPRING_PROFILES_ACTIVE");
+        return "production".equals(profile);
     }
 }
