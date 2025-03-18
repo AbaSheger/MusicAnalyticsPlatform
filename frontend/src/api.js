@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { mockRecommendations, mockTopTracks, mockPlaybackEvents, mockSearchEvents } from './mockData';
 
-// Ensure HTTPS is used
+// Update the API_BASE_URL to handle Cloudflare domain
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://music-analytics.abenezeranglo.uk";
 
 const api = axios.create({

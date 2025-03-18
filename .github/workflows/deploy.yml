@@ -85,7 +85,7 @@ jobs:
             echo "$service build successful: $JAR_PATH"
           done
 
-          # Special handling for user-tracking-service which might have a different version
+          # Special handling for user-tracking-service
           UT_JAR_PATH=$(find user-tracking-service -name "*.jar" | grep -v "\.original" | head -n 1)
           if [ -z "$UT_JAR_PATH" ]; then
             echo "Creating empty JAR for user-tracking-service to continue workflow"
@@ -179,14 +179,21 @@ jobs:
           echo "$SSH_KEY" > ssh_key.pem
           chmod 600 ssh_key.pem
           
-          # Create directory structure on VM
-          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "mkdir -p ~/music-analytics/nginx ~/music-analytics/vm-deploy"
+          # Create directory structure on VM (no need for nginx directory anymore)
+          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "mkdir -p ~/music-analytics/vm-deploy"
           
           # Copy Docker Compose file to VM
           scp -o StrictHostKeyChecking=no -i ssh_key.pem cloud-deploy/docker-compose.direct.yml opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/docker-compose.yml
           
-          # Deploy Docker services
-          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "cd ~/music-analytics/vm-deploy && docker login ${DOCKER_REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} && export ORACLE_EXTERNAL_HOSTNAME=${ORACLE_VM_IP} && export DOCKER_REGISTRY=${DOCKER_REGISTRY} && docker-compose pull && docker-compose up -d && docker logout ${DOCKER_REGISTRY}"
+          # Deploy Docker services with correct environment variables
+          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "cd ~/music-analytics/vm-deploy && \
+            docker login ${DOCKER_REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} && \
+            export ORACLE_EXTERNAL_HOSTNAME=music-analytics.abenezeranglo.uk && \
+            export EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ && \
+            export DOCKER_REGISTRY=${DOCKER_REGISTRY} && \
+            docker-compose pull && \
+            docker-compose up -d && \
+            docker logout ${DOCKER_REGISTRY}"
 
           rm -f ssh_key.pem
 
