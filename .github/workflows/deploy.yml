@@ -181,3 +181,11 @@ jobs:
       - name: Log out from Oracle Container Registry
         if: always()
         run: docker logout ${{ secrets.OCI_REGISTRY }}
+
+      - name: Collect container logs on failure
+        if: failure()
+        run: |
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ${{ secrets.SSH_USERNAME }}@${{ secrets.VM_IP_ADDRESS }} '
+            echo "==== EUREKA SERVER LOGS ====" &&
+            docker logs vm-deploy-eureka-server-1
+          '

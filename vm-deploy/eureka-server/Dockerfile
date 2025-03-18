@@ -18,17 +18,22 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 COPY --from=builder /javaruntime $JAVA_HOME
 COPY --from=builder /app/app.jar /app.jar
 
+# Install wget and curl for health check
+RUN apk add --no-cache wget curl
+
 # Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
+RUN chown -R spring:spring /app.jar
 
-# Install wget for health check
-RUN apk add --no-cache wget
+# Set proper permissions
+USER spring:spring
 
-# Configure health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD wget -q --spider http://localhost:8761/actuator/health || exit 1
-
+# Expose port
 EXPOSE 8761
 
-USER spring:spring
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "/app.jar"]
+# Configure health check - with longer start time and using 0.0.0.0 instead of localhost
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+    CMD wget -q --spider http://127.0.0.1:8761/actuator/health || exit 1
+
+# Use more memory and enable debug options
+ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-Dspring.profiles.active=docker", "-jar", "/app.jar"]
