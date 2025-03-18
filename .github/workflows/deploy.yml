@@ -81,7 +81,7 @@ jobs:
             if [ -z "$JAR_PATH" ]; then
               echo "Error: JAR not found for $service"
               exit 1
-            fi
+            }
             echo "$service build successful: $JAR_PATH"
           done
 
@@ -182,18 +182,8 @@ jobs:
           # Create directory structure on VM
           ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "mkdir -p ~/music-analytics/nginx ~/music-analytics/vm-deploy"
           
-          # Copy Nginx config and setup script to VM
-          scp -o StrictHostKeyChecking=no -i ssh_key.pem cloud-deploy/nginx/music-analytics.conf opc@${ORACLE_VM_IP}:~/music-analytics/nginx/
-          scp -o StrictHostKeyChecking=no -i ssh_key.pem cloud-deploy/nginx/setup-nginx.sh opc@${ORACLE_VM_IP}:~/music-analytics/nginx/
-          
           # Copy Docker Compose file to VM
           scp -o StrictHostKeyChecking=no -i ssh_key.pem cloud-deploy/docker-compose.direct.yml opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/docker-compose.yml
-          
-          # Make setup script executable
-          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "chmod +x ~/music-analytics/nginx/setup-nginx.sh"
-          
-          # Run setup script
-          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "~/music-analytics/nginx/setup-nginx.sh"
           
           # Deploy Docker services
           ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "cd ~/music-analytics/vm-deploy && docker login ${DOCKER_REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} && export ORACLE_EXTERNAL_HOSTNAME=${ORACLE_VM_IP} && export DOCKER_REGISTRY=${DOCKER_REGISTRY} && docker-compose pull && docker-compose up -d && docker logout ${DOCKER_REGISTRY}"
