@@ -2,7 +2,7 @@ import axios from 'axios';
 import { mockRecommendations, mockTopTracks, mockPlaybackEvents, mockSearchEvents } from './mockData';
 
 // Ensure HTTPS is used
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://romantic-snake-simple.ngrok-free.app";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://music-analytics.abenezeranglo.uk";
 
 const api = axios.create({
   baseURL: API_BASE_URL,

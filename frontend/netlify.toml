@@ -6,7 +6,7 @@
   NODE_OPTIONS = "--max-old-space-size=4096"
 
 [context.production.environment]
-  REACT_APP_API_BASE_URL = "https://romantic-snake-simple.ngrok-free.app"
+  REACT_APP_API_BASE_URL = "https://music-analytics.abenezeranglo.uk"
 
 [[redirects]]
   from = "/*"
