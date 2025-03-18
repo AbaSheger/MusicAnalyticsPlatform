@@ -144,27 +144,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # SINGLE SSH KEY SETUP METHOD
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VM_IP_ADDRESS }} >> ~/.ssh/known_hosts
+
       - name: Deploy to Oracle VM
         env:
-          ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ORACLE_VM_IP: ${{ secrets.VM_IP_ADDRESS }}
           DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
           OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
           OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
         run: |
-          # Create SSH key file
-          echo "$SSH_KEY" > ssh_key.pem
-          chmod 600 ssh_key.pem
-          
           # Verify VM connection
-          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "echo VM connection verified"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa opc@${ORACLE_VM_IP} "echo VM connection verified"
           
           # Create directory and copy docker-compose file
-          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "mkdir -p ~/music-analytics/vm-deploy"
-          scp -o StrictHostKeyChecking=no -i ssh_key.pem cloud-deploy/docker-compose.direct.yml opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/docker-compose.yml
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa opc@${ORACLE_VM_IP} "mkdir -p ~/music-analytics/vm-deploy"
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/docker-compose.yml
           
           # Execute deployment commands directly
-          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "cd ~/music-analytics/vm-deploy && \
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa opc@${ORACLE_VM_IP} "cd ~/music-analytics/vm-deploy && \
             docker login ${DOCKER_REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} && \
             export ORACLE_EXTERNAL_HOSTNAME=music-analytics.abenezeranglo.uk && \
             export EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ && \
@@ -174,18 +177,16 @@ jobs:
             docker-compose up -d && \
             docker-compose ps && \
             docker logout ${DOCKER_REGISTRY}"
-          
-          # Clean up
-          rm -f ssh_key.pem
 
       - name: Log out from Oracle Container Registry
         if: always()
         run: docker logout ${{ secrets.OCI_REGISTRY }}
 
-      - name: Collect container logs on failure
+      # CONSOLIDATED DEBUG COMMAND
+      - name: Debug on failure
         if: failure()
         run: |
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ${{ secrets.SSH_USERNAME }}@${{ secrets.VM_IP_ADDRESS }} '
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.VM_IP_ADDRESS }} '
             echo "==== EUREKA SERVER LOGS ====" &&
             docker logs vm-deploy-eureka-server-1
           '
