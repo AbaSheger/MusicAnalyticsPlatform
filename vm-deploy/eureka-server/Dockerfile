@@ -20,11 +20,15 @@ COPY --from=builder /app/app.jar /app.jar
 
 # Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
+
+# Install wget for health check
+RUN apk add --no-cache wget
 
 # Configure health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD wget -q --spider http://localhost:8761/actuator/health || exit 1
 
 EXPOSE 8761
+
+USER spring:spring
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "/app.jar"]

@@ -9,8 +9,8 @@ spring:
 
 eureka:
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    registerWithEureka: false
+    fetchRegistry: false
   server:
     wait-time-in-ms-when-sync-empty: 0
 
@@ -18,7 +18,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health
       base-path: /actuator
   endpoint:
     health:
