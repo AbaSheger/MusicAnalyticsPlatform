@@ -4,6 +4,7 @@ import { mockRecommendations, mockTopTracks, mockPlaybackEvents, mockSearchEvent
 // Update the API_BASE_URL to handle Cloudflare domain
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://music-analytics.abenezeranglo.uk";
 
+// Create axios instance with improved configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -13,15 +14,39 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Add request interceptor to handle credentials and CORS
+// Detect if we're dealing with an HTML response that's causing the SyntaxError
+const isHtmlResponse = (data) => {
+  if (typeof data !== 'string') return false;
+  return data.trim().startsWith('<!DOCTYPE html>') || 
+         data.trim().startsWith('<html') || 
+         data.includes('<head>') || 
+         data.includes('<body>');
+};
+
+// Get the appropriate mock data based on endpoint path
+const getMockDataForPath = (path) => {
+  if (path.includes('/recommendation/getAIRecommendations')) {
+    return mockRecommendations;
+  } else if (path.includes('/statistics/topTracks')) {
+    return mockTopTracks;
+  } else if (path.includes('/user-tracking/playbacks')) {
+    return mockPlaybackEvents;
+  } else if (path.includes('/user-tracking/searches')) {
+    return mockSearchEvents;
+  }
+  return {};
+};
+
+// Add request interceptor to properly set up CORS headers
 api.interceptors.request.use(
   config => {
-    // Ensure CORS headers are properly set
-    config.headers['Access-Control-Allow-Origin'] = 'https://musicanalytics.netlify.app';
-    config.headers['Access-Control-Allow-Credentials'] = 'true';
+    // The frontend shouldn't actually need to set CORS headers
+    // That's the server's job, but we can add an origin header
+    config.headers['Origin'] = window.location.origin;
     return config;
   },
   error => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -29,26 +54,16 @@ api.interceptors.request.use(
 // Add response interceptor for more robust error handling
 api.interceptors.response.use(
   response => {
-    // Check if the response is HTML instead of JSON (likely error page)
-    if (typeof response.data === 'string' && (response.data.includes('<!DOCTYPE html>') || response.data.includes('<html'))) {
+    // Check if the response is HTML instead of JSON
+    if (isHtmlResponse(response.data)) {
       console.warn('Received HTML instead of JSON, falling back to mock data');
-      // Extract the URL path to determine which mock data to return
-      const path = response.config.url;
-      if (path.includes('/recommendation/getAIRecommendations')) {
-        return { data: mockRecommendations };
-      } else if (path.includes('/statistics/topTracks')) {
-        return { data: mockTopTracks };
-      } else if (path.includes('/user-tracking/playbacks')) {
-        return { data: mockPlaybackEvents };
-      } else if (path.includes('/user-tracking/searches')) {
-        return { data: mockSearchEvents };
-      }
-      // Default mock data if path doesn't match specific endpoints
-      return { data: {} };
+      const mockData = getMockDataForPath(response.config.url);
+      return { data: mockData };
     }
     return response;
   },
   error => {
+    // Handle network and CORS errors
     console.warn('API error:', error);
     
     // Check if the error is CORS-related
@@ -59,25 +74,20 @@ api.interceptors.response.use(
       console.error('CORS or network error detected. Check backend CORS configuration.');
     }
     
+    // Check if error response is HTML (causing the SyntaxError)
+    if (error.response && isHtmlResponse(error.response.data)) {
+      console.warn('Received HTML error response, falling back to mock data');
+    }
+    
     // Return mock data based on the URL path
     try {
-      const url = error.config.url;
-      if (url.includes('/recommendation/getAIRecommendations')) {
-        return Promise.resolve({ data: mockRecommendations });
-      } else if (url.includes('/statistics/topTracks')) {
-        return Promise.resolve({ data: mockTopTracks });
-      } else if (url.includes('/user-tracking/playbacks')) {
-        return Promise.resolve({ data: mockPlaybackEvents });
-      } else if (url.includes('/user-tracking/searches')) {
-        return Promise.resolve({ data: mockSearchEvents });
-      }
+      const mockData = getMockDataForPath(error.config.url);
+      return Promise.resolve({ data: mockData });
     } catch (e) {
       console.error('Error determining mock data to return:', e);
       // If we can't determine the URL, return empty data
       return Promise.resolve({ data: {} });
     }
-    
-    return Promise.reject(error);
   }
 );
 

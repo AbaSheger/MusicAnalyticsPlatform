@@ -9,6 +9,7 @@ import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 @SpringBootApplication
 @EnableDiscoveryClient
@@ -21,14 +22,14 @@ public class ApiGatewayApplication {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(Arrays.asList(
-            "https://musicanalytics.netlify.app", 
-            "https://music-analytics.abenezeranglo.uk"
-            // Remove "*" here as it's incompatible with allowCredentials=true
-        ));
-        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        corsConfig.setAllowedHeaders(Arrays.asList("*"));
+        corsConfig.addAllowedOrigin("https://musicanalytics.netlify.app");
+        corsConfig.addAllowedOrigin("https://music-analytics.abenezeranglo.uk");
+        corsConfig.addAllowedOrigin("http://localhost:3000");
+        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+        corsConfig.setAllowedHeaders(Collections.singletonList("*"));
+        corsConfig.setExposedHeaders(Collections.singletonList("*"));
         corsConfig.setAllowCredentials(true);
+        corsConfig.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
