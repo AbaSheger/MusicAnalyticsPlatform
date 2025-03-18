@@ -14,6 +14,7 @@ spring:
             allowedOrigins:
               - https://musicanalytics.netlify.app
               - https://music-analytics.abenezeranglo.uk
+              - http://localhost:3000
             allowedMethods:
               - GET
               - POST
@@ -21,7 +22,9 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
+            exposedHeaders: "*"
             allowCredentials: true
+            maxAge: 3600
       discovery:
         locator:
           enabled: true
@@ -47,6 +50,10 @@ spring:
             - RewritePath=/user-tracking(?<segment>/?.*), /user-tracking$\{segment}
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+        - AddResponseHeader=Access-Control-Allow-Origin, https://musicanalytics.netlify.app
+        - AddResponseHeader=Access-Control-Allow-Methods, GET,POST,PUT,DELETE,OPTIONS
+        - AddResponseHeader=Access-Control-Allow-Headers, Content-Type,Authorization
+        - AddResponseHeader=Access-Control-Max-Age, 3600
 
 eureka:
   client:
@@ -92,6 +99,7 @@ spring:
             allowedOrigins:
               - https://musicanalytics.netlify.app
               - https://music-analytics.abenezeranglo.uk
+              - http://localhost:3000
             allowedMethods:
               - GET
               - POST
@@ -99,7 +107,9 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
+            exposedHeaders: "*"
             allowCredentials: true
+            maxAge: 3600
       routes:
         - id: recommendation-service
           uri: ${RECOMMENDATION_SERVICE_URL}
@@ -119,6 +129,12 @@ spring:
             - Path=/user-tracking/**
           filters:
             - RewritePath=/user-tracking(?<segment>/?.*), /user-tracking$\{segment}
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+        - AddResponseHeader=Access-Control-Allow-Origin, https://musicanalytics.netlify.app
+        - AddResponseHeader=Access-Control-Allow-Methods, GET,POST,PUT,DELETE,OPTIONS
+        - AddResponseHeader=Access-Control-Allow-Headers, Content-Type,Authorization
+        - AddResponseHeader=Access-Control-Max-Age, 3600
 
 eureka:
   client:
