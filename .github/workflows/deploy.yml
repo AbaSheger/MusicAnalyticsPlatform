@@ -144,13 +144,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to Oracle Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ secrets.OCI_REGISTRY }}
-          username: ${{ secrets.OCI_USERNAME }}
-          password: ${{ secrets.OCI_AUTH_TOKEN }}
-
       - name: Deploy to Oracle VM
         env:
           ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
@@ -163,74 +156,27 @@ jobs:
           echo "$SSH_KEY" > ssh_key.pem
           chmod 600 ssh_key.pem
           
-          # Create deployment directory
-          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} mkdir -p ~/music-analytics/vm-deploy
+          # Verify VM connection
+          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "echo VM connection verified"
           
-          # Copy Docker Compose file
+          # Create directory and copy docker-compose file
+          ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "mkdir -p ~/music-analytics/vm-deploy"
           scp -o StrictHostKeyChecking=no -i ssh_key.pem cloud-deploy/docker-compose.direct.yml opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/docker-compose.yml
           
-          # Create deployment script with environment variables
-          cat << EOF > deploy.sh
-          #!/bin/bash
-          cd ~/music-analytics/vm-deploy
-
-          # Set environment variables
-          export DOCKER_REGISTRY=${DOCKER_REGISTRY}
-          export ORACLE_EXTERNAL_HOSTNAME=music-analytics.abenezeranglo.uk
-          export EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-
-          # Stop and clean up existing containers
-          docker-compose down --remove-orphans || true
-          docker container prune -f || true
-          docker image prune -f || true
-
-          # Pull and start services
-          docker-compose pull
-          docker-compose up -d eureka-server
-
-          # Wait for Eureka server to be healthy
-          echo "Waiting for Eureka server to be healthy..."
-          for i in \$(seq 1 60); do
-            if docker-compose ps eureka-server | grep -q "healthy"; then
-              echo "Eureka server is healthy"
-              break
-            fi
-            if [ \$i -eq 60 ]; then
-              echo "Timeout waiting for Eureka server to be healthy"
-              docker-compose logs eureka-server
-              exit 1
-            fi
-            echo "Waiting... (\$i/60)"
-            sleep 5
-          done
-
-          # Start other services
-          docker-compose up -d api-gateway recommendation-service statistics-service user-tracking-service
-
-          # Show status of all services
-          echo "Service status:"
-          docker-compose ps
-          
-          # Show logs if any service is unhealthy
-          if docker-compose ps | grep -q "unhealthy\|Exit"; then
-            echo "Some services are unhealthy or exited. Showing logs:"
-            docker-compose logs
-            exit 1
-          fi
-          
-          echo "Deployment completed successfully"
-          EOF
-
-          # Copy and execute deployment script
-          scp -o StrictHostKeyChecking=no -i ssh_key.pem deploy.sh opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/
+          # Execute deployment commands directly
           ssh -o StrictHostKeyChecking=no -i ssh_key.pem opc@${ORACLE_VM_IP} "cd ~/music-analytics/vm-deploy && \
-            chmod +x deploy.sh && \
             docker login ${DOCKER_REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} && \
-            ./deploy.sh && \
+            export ORACLE_EXTERNAL_HOSTNAME=music-analytics.abenezeranglo.uk && \
+            export EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ && \
+            export DOCKER_REGISTRY=${DOCKER_REGISTRY} && \
+            docker-compose down --remove-orphans || true && \
+            docker-compose pull && \
+            docker-compose up -d && \
+            docker-compose ps && \
             docker logout ${DOCKER_REGISTRY}"
           
           # Clean up
-          rm -f ssh_key.pem deploy.sh
+          rm -f ssh_key.pem
 
       - name: Log out from Oracle Container Registry
         if: always()
