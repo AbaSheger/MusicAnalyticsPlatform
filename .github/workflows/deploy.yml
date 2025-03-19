@@ -131,17 +131,20 @@ jobs:
           # Debug directory permissions
           ls -la ~ | grep .ssh
           
-          # Write the SSH key with proper error handling
+          # Check if the SSH key secret is set
           if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
             echo "ERROR: SSH_PRIVATE_KEY secret is not set!"
             exit 1
           fi
           
-          # Use tee command for more reliable file writing
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tee ${{ env.SSH_KEY_PATH }} > /dev/null || {
-            echo "ERROR: Failed to write SSH key file!"
+          # Write SSH key file using direct redirection instead of tee
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ${{ env.SSH_KEY_PATH }}
+          
+          # Check if the file was created
+          if [ ! -f "${{ env.SSH_KEY_PATH }}" ]; then
+            echo "ERROR: Failed to create SSH key file!"
             exit 1
-          }
+          fi
           
           # Set proper permissions on the key file
           chmod 600 ${{ env.SSH_KEY_PATH }} || {
@@ -149,15 +152,13 @@ jobs:
             exit 1
           }
           
-          # Verify the key was written correctly
-          if [ ! -f "${{ env.SSH_KEY_PATH }}" ]; then
-            echo "ERROR: Failed to create SSH key file!"
-            exit 1
-          fi
+          # Verify file content (indirectly)
+          key_size=$(stat -c %s ${{ env.SSH_KEY_PATH }})
+          echo "SSH key file size: $key_size bytes"
           
-          # Verify permissions and file size
-          ls -la ${{ env.SSH_KEY_PATH }}
-          wc -l ${{ env.SSH_KEY_PATH }} || echo "Could not count lines in key file"
+          if [ "$key_size" -lt 100 ]; then
+            echo "WARNING: SSH key file seems too small, may be invalid"
+          fi
           
           # Add VM to known hosts - verify VM_IP_ADDRESS is set
           if [ -z "${{ secrets.VM_IP_ADDRESS }}" ]; then
@@ -170,9 +171,9 @@ jobs:
             exit 1
           }
           
-          # Test SSH connection
+          # Test SSH connection (with verbose mode for debugging)
           echo "Testing SSH connection..."
-          ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "echo SSH connection successful"
+          ssh -v -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "echo SSH connection successful"
 
       - name: Deploy to Oracle VM
         run: |
