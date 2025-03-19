@@ -13,6 +13,7 @@
         <module>eureka-server</module>
         <module>recommendation-service</module>
         <module>statistics-service</module>
+        <module>user-tracking-service</module>
     </modules>
 
     <repositories>

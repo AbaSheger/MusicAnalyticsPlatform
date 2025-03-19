@@ -1,5 +1,5 @@
 # Build stage
-FROM amazoncorretto:17-alpine as builder
+FROM maven:3.8.5-openjdk-8-slim AS build
 WORKDIR /app
 COPY eureka-server.jar app.jar
 RUN apk add --no-cache binutils \

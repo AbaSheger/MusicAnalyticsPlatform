@@ -1,5 +1,5 @@
-# Use an official Maven image to build the application
-FROM maven:3.8.4-openjdk-11 AS build
+# Use an official Maven image with Java 8 to match pom.xml configuration
+FROM maven:3.8.5-openjdk-8-slim AS build
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -13,7 +13,7 @@ COPY src ./src
 RUN mvn package -DskipTests
 
 # Use an official OpenJDK image to run the application
-FROM openjdk:11-jre-slim
+FROM openjdk:8-jre-slim
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -21,8 +21,8 @@ WORKDIR /app
 # Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Copy the built JAR file from the build stage
-COPY --from=build /app/target/recommendation-service-1.0-SNAPSHOT.jar app.jar
+# Copy the built JAR file from the build stage (with correct path)
+COPY --from=build /app/target/recommendation-service-1.0-SNAPSHOT.jar ./app.jar
 
 # Expose the port that the application will run on
 EXPOSE 8082
