@@ -26,7 +26,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Configure Maven for reliability
       - name: Configure Maven settings
         run: |
           mkdir -p ~/.m2
@@ -43,7 +42,6 @@ jobs:
           </settings>
           EOF
 
-      # Build with retries
       - name: Build with Maven (with retries)
         run: |
           max_attempts=3
@@ -64,7 +62,6 @@ jobs:
             exit 1
           fi
 
-      # Verify JAR files exist
       - name: Verify build artifacts
         run: |
           echo "Checking JAR files..."
@@ -77,7 +74,6 @@ jobs:
             fi
           done
 
-      # Debug step: List all JAR files in target directories
       - name: List target directory contents
         run: |
           echo "Listing all target directories contents..."
@@ -86,141 +82,97 @@ jobs:
             ls -la $service/target/ || echo "No target directory found"
           done
 
-      # Critical step: Prepare Docker build context
       - name: Prepare Docker build context
         run: |
-          # Create vm-deploy directories
-          mkdir -p vm-deploy/eureka-server
-          mkdir -p vm-deploy/api-gateway
-          mkdir -p vm-deploy/recommendation-service
-          mkdir -p vm-deploy/statistics-service
-          mkdir -p vm-deploy/user-tracking-service
-          
-          # Copy JAR files to vm-deploy directories
+          mkdir -p vm-deploy/eureka-server vm-deploy/api-gateway vm-deploy/recommendation-service vm-deploy/statistics-service vm-deploy/user-tracking-service
           cp $(find eureka-server/target -name "eureka-server*.jar" | grep -v original) vm-deploy/eureka-server/eureka-server.jar
           cp $(find api-gateway/target -name "api-gateway*.jar" | grep -v original) vm-deploy/api-gateway/api-gateway.jar
           cp $(find recommendation-service/target -name "recommendation-service*.jar" | grep -v original) vm-deploy/recommendation-service/recommendation-service.jar
           cp $(find statistics-service/target -name "statistics-service*.jar" | grep -v original) vm-deploy/statistics-service/statistics-service.jar
           cp $(find user-tracking-service/target -name "user-tracking-service*.jar" | grep -v original) vm-deploy/user-tracking-service/user-tracking-service.jar
           
-          # Copy Dockerfiles
           cp eureka-server/Dockerfile vm-deploy/eureka-server/
           cp api-gateway/Dockerfile vm-deploy/api-gateway/
           cp recommendation-service/Dockerfile vm-deploy/recommendation-service/
           cp statistics-service/Dockerfile vm-deploy/statistics-service/
           cp user-tracking-service/Dockerfile vm-deploy/user-tracking-service/
           
-          # Verify files were copied
           echo "Verifying copied files:"
           ls -la vm-deploy/*/
 
       - name: Debug environment variables
         run: |
-          echo "Checking environment variables (with sensitive data masked):"
+          echo "Checking environment variables (sensitive data masked):"
           echo "ORACLE_VM_IP is set: ${{ secrets.ORACLE_VM_IP != '' }}"
           echo "DOCKER_REGISTRY is set: ${{ secrets.OCI_REGISTRY != '' }}"
           echo "OCI_USERNAME is set: ${{ secrets.OCI_USERNAME != '' }}"
           echo "OCI_AUTH_TOKEN is set: ${{ secrets.OCI_AUTH_TOKEN != '' }}"
 
-      # Fixed SSH key setup step
       - name: Set up SSH key
         run: |
-          # Create directory and set permissions
           mkdir -p $HOME/.ssh
           chmod 700 $HOME/.ssh
-          
-          # Debug directory permissions
           ls -la $HOME/.ssh || echo "Unable to list .ssh directory"
-          
-          # Check if the SSH key secret is set
           if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
             echo "ERROR: SSH_PRIVATE_KEY secret is not set!"
             exit 1
           fi
-          
-          # Write SSH key file and check it was created
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
           ls -la $HOME/.ssh/id_rsa || { echo "ERROR: Failed to create SSH key file!"; exit 1; }
-          
-          # Set proper permissions on the key file
           chmod 600 $HOME/.ssh/id_rsa || { echo "ERROR: Failed to set permissions on SSH key file!"; exit 1; }
-          
-          # Verify file content (indirectly)
           key_size=$(stat -c %s $HOME/.ssh/id_rsa)
           echo "SSH key file size: $key_size bytes"
-          
-          # Add VM to known hosts
           if [ -z "${{ secrets.ORACLE_VM_IP }}" ]; then
             echo "ERROR: ORACLE_VM_IP secret is not set!"
             exit 1
           fi
-          
-          # Initialize known_hosts file
           touch $HOME/.ssh/known_hosts
-          
-          # Add VM to known hosts
           ssh-keyscan -H ${{ secrets.ORACLE_VM_IP }} >> $HOME/.ssh/known_hosts
-          
-          # Test SSH connection
           echo "Testing SSH connection..."
           ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "echo SSH connection successful" || {
-            echo "ERROR: SSH connection failed. Debugging information:"
             ls -la $HOME/.ssh/
-            echo "Key file content (first line only):"
             head -1 $HOME/.ssh/id_rsa
             exit 1
           }
 
-      # Prepare .env file for docker-compose
       - name: Prepare environment file
         run: |
-          # Create .env file with secrets for docker-compose
           cat > vm-deploy/.env << EOF
           DOCKER_REGISTRY=${{ secrets.OCI_REGISTRY }}
           OCI_USERNAME=${{ secrets.OCI_USERNAME }}
           OCI_AUTH_TOKEN=${{ secrets.OCI_AUTH_TOKEN }}
           EOF
-          
-          # Show file (without sensitive data)
           echo "Created .env file for docker-compose"
-          echo "DOCKER_REGISTRY is set: true"
-          echo "OCI_USERNAME is set: true" 
-          echo "OCI_AUTH_TOKEN is set: true"
+          echo "DOCKER_REGISTRY, OCI_USERNAME, OCI_AUTH_TOKEN are set"
 
       - name: Deploy to Oracle VM
         run: |
-          # Create directories on VM
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "mkdir -p ~/music-analytics/vm-deploy/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}"
           
-          # Copy JAR files and Dockerfiles to VM
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/eureka-server/eureka-server.jar vm-deploy/eureka-server/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/eureka-server/
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/api-gateway/api-gateway.jar vm-deploy/api-gateway/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/api-gateway/
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/recommendation-service/recommendation-service.jar vm-deploy/recommendation-service/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/recommendation-service/
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/statistics-service/statistics-service.jar vm-deploy/statistics-service/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/statistics-service/
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/user-tracking-service/user-tracking-service.jar vm-deploy/user-tracking-service/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/user-tracking-service/
           
-          # Copy docker-compose file and .env file
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/docker-compose.yml
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/.env opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/.env
           
-          # Build and run containers
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "cd ~/music-analytics/vm-deploy && \
             echo 'Logging in to Docker registry...' && \
-            docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} -p ${{ secrets.OCI_AUTH_TOKEN }} && \
-            echo 'Stopping existing containers if any...' && \
-            docker ps -q | xargs -r docker stop && \
-            docker ps -aq | xargs -r docker rm && \
-            echo 'Starting new containers...' && \
-            echo 'DOCKER_REGISTRY=${{ secrets.OCI_REGISTRY }}' > .env && \
-            echo 'OCI_USERNAME=${{ secrets.OCI_USERNAME }}' >> .env && \
-            echo 'OCI_AUTH_TOKEN=${{ secrets.OCI_AUTH_TOKEN }}' >> .env && \
-            cat .env && \
-            export DOCKER_REGISTRY=${{ secrets.OCI_REGISTRY }} && \
+            echo \"${{ secrets.OCI_AUTH_TOKEN }}\" | docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} --password-stdin && \
+            echo 'Stopping and removing existing containers if any...' && \
+            docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && \
+            echo 'Building Docker images locally...' && \
+            for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do \
+              docker build -t music-analytics/\$service ./\$service || exit 1; \
+            done && \
+            echo 'Fixing docker-compose file (removing version attribute)...' && \
+            sed -i '/^version:/d' docker-compose.yml && \
+            echo 'Starting new containers with docker-compose...' && \
             docker-compose up -d && \
-            echo 'Container status:' && \
-            docker-compose ps"
-
-      # Debug command
+            echo 'Container status:' && docker-compose ps"
+      
       - name: Debug on failure
         if: failure()
         run: |
