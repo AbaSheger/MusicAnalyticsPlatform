@@ -7,12 +7,15 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:default}
 
+# Default configuration
 eureka:
   client:
     registerWithEureka: false
     fetchRegistry: false
     serviceUrl:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
   server:
     wait-time-in-ms-when-sync-empty: 0
 
@@ -27,6 +30,7 @@ management:
       show-details: always
 
 ---
+# Production profile configuration
 spring:
   config:
     activate:
@@ -38,4 +42,16 @@ eureka:
     non-secure-port-enabled: true
     secure-port-enabled: false
     prefer-ip-address: false
+    
+---
+# Docker profile configuration
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: eureka-server
 
