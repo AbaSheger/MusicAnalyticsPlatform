@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/user-tracking")
@@ -24,7 +25,10 @@ public class UserTrackingController {
         String playback = payload.get("playback");
         PlaybackEvent event = new PlaybackEvent(playback);
         playbackRepository.save(event);
-        return Map.of("status", "success", "message", "Playback logged successfully");
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Playback logged successfully");
+        return response;
     }
 
     @PostMapping("/logSearch")
@@ -32,7 +36,10 @@ public class UserTrackingController {
         String search = payload.get("search");
         SearchEvent event = new SearchEvent(search);
         searchRepository.save(event);
-        return Map.of("status", "success", "message", "Search logged successfully");
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Search logged successfully");
+        return response;
     }
 
     @GetMapping("/playbacks")

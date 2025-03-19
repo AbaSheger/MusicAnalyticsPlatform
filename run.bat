@@ -1,4 +1,6 @@
 @echo off
+setlocal enabledelayedexpansion
+
 echo ===== Music Analytics Platform - Run Options =====
 echo.
 echo 1) Run with Docker (requires Docker Desktop running)
@@ -8,16 +10,16 @@ echo.
 
 set /p choice="Choose option (1-3): "
 
-if "%choice%"=="1" (
-    call :RunDocker
-) else if "%choice%"=="2" (
-    call :RunDirect
-) else if "%choice%"=="3" (
-    exit /b 0
-) else (
-    echo Invalid option. Please try again.
-    exit /b 1
-)
+if "%choice%"=="1" goto RunDocker
+if "%choice%"=="2" goto RunDirect
+if "%choice%"=="3" exit /b 0
+echo Invalid option. Please try again.
+exit /b 1
+
+:docker_not_running
+echo Please install Docker Desktop from https://www.docker.com/products/docker-desktop/
+echo After installing, restart your terminal and try again.
+exit /b 1
 
 :RunDocker
 echo ===== Building and Running with Docker =====
@@ -26,7 +28,7 @@ REM Check if Docker is running
 docker ps >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo Docker is not running. Please start Docker Desktop and try again.
-    goto :docker_not_running
+    goto docker_not_running
 ) else (
     echo Docker is running...
 )

@@ -1,39 +1,20 @@
-# Build stage
-FROM maven:3.8.5-openjdk-8-slim AS build
+# First stage: Build the application
+FROM maven:3.8.5-openjdk-8-slim AS builder
 WORKDIR /app
-COPY eureka-server.jar app.jar
-RUN apk add --no-cache binutils \
-    && jlink \
-    --add-modules java.base,java.logging,java.xml,java.sql,java.naming,java.desktop,java.security.jgss,java.instrument,jdk.unsupported \
-    --strip-debug \
-    --no-man-pages \
-    --no-header-files \
-    --compress=2 \
-    --output /javaruntime
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn package -DskipTests
+# Set up Java runtime (if needed)
+RUN mkdir -p /javaruntime && \
+    cp -R $JAVA_HOME/* /javaruntime/
 
-# Runtime stage
+# Second stage: Create the runtime image
 FROM alpine:3.18
-ENV JAVA_HOME=/javaruntime
+RUN apk add --no-cache openjdk8-jre-base
+WORKDIR /app
+ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
-COPY --from=builder /javaruntime $JAVA_HOME
-COPY --from=builder /app/app.jar /app.jar
-
-# Install wget and curl for health check
-RUN apk add --no-cache wget curl
-
-# Create non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
-RUN chown -R spring:spring /app.jar
-
-# Set proper permissions
-USER spring:spring
-
-# Expose port
+COPY --from=builder /app/target/eureka-server-*.jar /app/app.jar
 EXPOSE 8761
-
-# Configure health check - with longer start time and using 0.0.0.0 instead of localhost
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-    CMD wget -q --spider http://127.0.0.1:8761/actuator/health || exit 1
-
-# Use more memory and enable debug options
-ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-Dspring.profiles.active=docker", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

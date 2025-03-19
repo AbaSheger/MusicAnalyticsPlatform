@@ -176,8 +176,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "cd ~/music-analytics/vm-deploy && \
             echo 'Logging in to Docker registry...' && \
             docker login ${{ env.DOCKER_REGISTRY }} -u ${{ env.OCI_USERNAME }} -p ${{ env.OCI_AUTH_TOKEN }} && \
-            echo 'Stopping existing containers...' && \
-            docker-compose down --remove-orphans || true && \
+            echo 'Stopping ALL existing containers...' && \
+            docker stop $(docker ps -q) || true && \
+            docker rm $(docker ps -aq) || true && \
             echo 'Starting new containers...' && \
             docker-compose up -d && \
             echo 'Container status:' && \
