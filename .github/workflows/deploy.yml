@@ -192,32 +192,139 @@ jobs:
           # Create the base directory on the remote VM
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "mkdir -p ~/music-analytics/vm-deploy"
           
+          # Create a new docker-compose.yml file locally
+          cat > vm-deploy/docker-compose.yml << 'EOF'
+          version: '3.8'
+
+          services:
+            eureka-server:
+              build: ./eureka-server
+              ports:
+                - "8761:8761"
+              environment:
+                - SPRING_PROFILES_ACTIVE=docker
+                - SERVER_PORT=8761
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD", "wget", "-q", "--spider", "http://localhost:8761/actuator/health"]
+                interval: 30s
+                timeout: 10s
+                retries: 5
+                start_period: 120s
+
+            api-gateway:
+              build: ./api-gateway
+              ports:
+                - "8080:8080"
+              environment:
+                - SPRING_PROFILES_ACTIVE=production
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - ORACLE_EXTERNAL_HOSTNAME=${ORACLE_EXTERNAL_HOSTNAME}
+                - RENDER_EXTERNAL_HOSTNAME=disabled
+                - CORS_ALLOWED_ORIGINS=https://musicanalytics.netlify.app,https://music-analytics.abenezeranglo.uk
+                - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
+              depends_on:
+                eureka-server:
+                  condition: service_healthy
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 60s
+
+            recommendation-service:
+              build: ./recommendation-service
+              ports:
+                - "8082:8082"
+              environment:
+                - SPRING_PROFILES_ACTIVE=production
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - RENDER_EXTERNAL_HOSTNAME=disabled
+                - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
+              depends_on:
+                eureka-server:
+                  condition: service_healthy
+              volumes:
+                - recommendation-data:/data
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 60s
+
+            statistics-service:
+              build: ./statistics-service
+              ports:
+                - "8083:8083"
+              environment:
+                - SPRING_PROFILES_ACTIVE=production
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - RENDER_EXTERNAL_HOSTNAME=disabled
+                - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
+              depends_on:
+                eureka-server:
+                  condition: service_healthy
+              volumes:
+                - statistics-data:/data
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 60s
+
+            user-tracking-service:
+              build: ./user-tracking-service
+              ports:
+                - "8084:8084"
+              environment:
+                - SPRING_PROFILES_ACTIVE=production
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - RENDER_EXTERNAL_HOSTNAME=disabled
+                - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
+              depends_on:
+                eureka-server:
+                  condition: service_healthy
+              volumes:
+                - user-tracking-data:/data
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 60s
+
+          volumes:
+            recommendation-data:
+            statistics-data:
+            user-tracking-data:
+          EOF
+
           # Recursively copy each service directory to the remote VM with the destination path quoted
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/eureka-server opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/eureka-server"
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/api-gateway opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/api-gateway"
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/recommendation-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/recommendation-service"
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/statistics-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/statistics-service"
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/user-tracking-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/user-tracking-service"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/eureka-server opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/api-gateway opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/recommendation-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/statistics-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/user-tracking-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/"
           
           # Copy the docker-compose file and environment file to the remote VM
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/docker-compose.yml"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/docker-compose.yml opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/docker-compose.yml"
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/.env opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/.env"
           
-          # On the remote VM: log in to the Docker registry, build images for each service, and deploy containers
+          # On the remote VM: log in to the Docker registry and deploy containers
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "cd ~/music-analytics/vm-deploy && \
             echo 'Logging in to Docker registry...' && \
             echo \"${{ secrets.OCI_AUTH_TOKEN }}\" | docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} --password-stdin && \
             echo 'Stopping and removing existing containers if any...' && \
             docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && \
-            echo 'Modifying docker-compose.yml to use local Dockerfiles...' && \
-            sed -i '/^version:/d' docker-compose.yml && \
-            sed -i 's|build:\\n      context: ./|build: ./|g' docker-compose.yml && \
             echo 'Building Docker images locally...' && \
-            for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do \
-              cd \$service && \
-              docker build -t music-analytics/\$service . || exit 1; \
-              cd .. ; \
-            done && \
+            docker-compose build --no-cache && \
             echo 'Starting new containers with docker-compose...' && \
             docker-compose up -d && \
             echo 'Container status:' && docker-compose ps"
