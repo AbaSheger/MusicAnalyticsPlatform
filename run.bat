@@ -23,10 +23,12 @@ if "%choice%"=="1" (
 echo ===== Building and Running with Docker =====
 
 REM Check if Docker is running
-docker info >nul 2>&1
+docker ps >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo Docker is not running. Please start Docker Desktop and try again.
-    exit /b 1
+    goto :docker_not_running
+) else (
+    echo Docker is running...
 )
 
 REM Build Maven project
