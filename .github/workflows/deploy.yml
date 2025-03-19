@@ -84,26 +84,60 @@ jobs:
 
       - name: Prepare Docker build context
         run: |
-          # Create target directories under vm-deploy for each service
-          mkdir -p vm-deploy/eureka-server/target \
-                   vm-deploy/api-gateway/target \
-                   vm-deploy/recommendation-service/target \
-                   vm-deploy/statistics-service/target \
-                   vm-deploy/user-tracking-service/target
+          # Create directories under vm-deploy for each service
+          mkdir -p vm-deploy/eureka-server \
+                   vm-deploy/api-gateway \
+                   vm-deploy/recommendation-service \
+                   vm-deploy/statistics-service \
+                   vm-deploy/user-tracking-service
           
-          # Copy the pre-built JAR files into the respective target directories with expected names
-          cp $(find eureka-server/target -type f -name "eureka-server*.jar" | grep -v original) vm-deploy/eureka-server/target/eureka-server-1.0-SNAPSHOT.jar
-          cp $(find api-gateway/target -type f -name "api-gateway*.jar" | grep -v original) vm-deploy/api-gateway/target/api-gateway-1.0-SNAPSHOT.jar
-          cp $(find recommendation-service/target -type f -name "recommendation-service*.jar" | grep -v original) vm-deploy/recommendation-service/target/recommendation-service-1.0-SNAPSHOT.jar
-          cp $(find statistics-service/target -type f -name "statistics-service*.jar" | grep -v original) vm-deploy/statistics-service/target/statistics-service-1.0-SNAPSHOT.jar
-          cp $(find user-tracking-service/target -type f -name "user-tracking-service*.jar" | grep -v original) vm-deploy/user-tracking-service/target/user-tracking-service-1.0-SNAPSHOT.jar
+          # Copy the pre-built JAR files directly into the vm-deploy directories with simplified names
+          cp $(find eureka-server/target -type f -name "eureka-server*.jar" | grep -v original) vm-deploy/eureka-server/eureka-server.jar
+          cp $(find api-gateway/target -type f -name "api-gateway*.jar" | grep -v original) vm-deploy/api-gateway/api-gateway.jar
+          cp $(find recommendation-service/target -type f -name "recommendation-service*.jar" | grep -v original) vm-deploy/recommendation-service/recommendation-service.jar
+          cp $(find statistics-service/target -type f -name "statistics-service*.jar" | grep -v original) vm-deploy/statistics-service/statistics-service.jar
+          cp $(find user-tracking-service/target -type f -name "user-tracking-service*.jar" | grep -v original) vm-deploy/user-tracking-service/user-tracking-service.jar
           
-          # Copy the updated Dockerfiles into the respective service directories
-          cp eureka-server/Dockerfile vm-deploy/eureka-server/
-          cp api-gateway/Dockerfile vm-deploy/api-gateway/
-          cp recommendation-service/Dockerfile vm-deploy/recommendation-service/
-          cp statistics-service/Dockerfile vm-deploy/statistics-service/
-          cp user-tracking-service/Dockerfile vm-deploy/user-tracking-service/
+          # Use the simplified Dockerfiles in the vm-deploy directories
+          cat > vm-deploy/eureka-server/Dockerfile << 'EOF'
+          FROM openjdk:8-jre-slim
+          WORKDIR /app
+          COPY eureka-server.jar app.jar
+          EXPOSE 8761
+          ENTRYPOINT ["java", "-jar", "app.jar"]
+          EOF
+          
+          cat > vm-deploy/api-gateway/Dockerfile << 'EOF'
+          FROM openjdk:8-jre-slim
+          WORKDIR /app
+          COPY api-gateway.jar app.jar
+          EXPOSE 8080
+          ENTRYPOINT ["java", "-jar", "app.jar"]
+          EOF
+          
+          cat > vm-deploy/recommendation-service/Dockerfile << 'EOF'
+          FROM openjdk:8-jre-slim
+          WORKDIR /app
+          COPY recommendation-service.jar app.jar
+          EXPOSE 8082
+          ENTRYPOINT ["java", "-jar", "app.jar"]
+          EOF
+          
+          cat > vm-deploy/statistics-service/Dockerfile << 'EOF'
+          FROM openjdk:8-jre-slim
+          WORKDIR /app
+          COPY statistics-service.jar app.jar
+          EXPOSE 8083
+          ENTRYPOINT ["java", "-jar", "app.jar"]
+          EOF
+          
+          cat > vm-deploy/user-tracking-service/Dockerfile << 'EOF'
+          FROM openjdk:8-jre-slim
+          WORKDIR /app
+          COPY user-tracking-service.jar app.jar
+          EXPOSE 8084
+          ENTRYPOINT ["java", "-jar", "app.jar"]
+          EOF
           
           echo "Verifying copied files:"
           ls -la vm-deploy/*/
@@ -169,7 +203,7 @@ jobs:
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/docker-compose.yml"
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/.env opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/.env"
           
-          # On the remote VM: log in to the Docker registry, build images for each service, adjust docker-compose, and deploy containers
+          # On the remote VM: log in to the Docker registry, build images for each service, and deploy containers
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "cd ~/music-analytics/vm-deploy && \
             echo 'Logging in to Docker registry...' && \
             echo \"${{ secrets.OCI_AUTH_TOKEN }}\" | docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} --password-stdin && \
@@ -177,7 +211,9 @@ jobs:
             docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && \
             echo 'Building Docker images locally...' && \
             for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do \
-              docker build -t music-analytics/\$service ./\$service || exit 1; \
+              cd \$service && \
+              docker build -t music-analytics/\$service . || exit 1; \
+              cd .. ; \
             done && \
             echo 'Fixing docker-compose file (removing version attribute)...' && \
             sed -i '/^version:/d' docker-compose.yml && \
