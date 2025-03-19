@@ -8,6 +8,13 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      ORACLE_VM_IP: ${{ secrets.VM_IP_ADDRESS }}
+      DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
+      OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
+      OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
+      SSH_KEY_PATH: ~/.ssh/id_rsa
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -62,11 +69,21 @@ jobs:
         run: |
           echo "Checking JAR files..."
           for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do
-            if [ ! -f "$service/target/$service-*.jar" ] && [ ! -f "$service/target/$service.jar" ]; then
+            jar_files=$(find $service/target -type f -name "$service*.jar" | grep -v original || echo "")
+            if [ -z "$jar_files" ]; then
               echo "ERROR: JAR file for $service not found!"
               find $service/target -type f -name "*.jar" || echo "No JARs found"
               exit 1
             fi
+          done
+
+      # Debug step: List all JAR files in target directories
+      - name: List target directory contents
+        run: |
+          echo "Listing all target directories contents..."
+          for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do
+            echo "=== $service/target contents: ==="
+            ls -la $service/target/ || echo "No target directory found"
           done
 
       # Critical step: Prepare Docker build context
@@ -86,51 +103,95 @@ jobs:
           cp $(find statistics-service/target -name "statistics-service*.jar" | grep -v original) vm-deploy/statistics-service/statistics-service.jar
           cp $(find user-tracking-service/target -name "user-tracking-service*.jar" | grep -v original) vm-deploy/user-tracking-service/user-tracking-service.jar
           
+          # Copy Dockerfiles
+          cp eureka-server/Dockerfile vm-deploy/eureka-server/
+          cp api-gateway/Dockerfile vm-deploy/api-gateway/
+          cp recommendation-service/Dockerfile vm-deploy/recommendation-service/
+          cp statistics-service/Dockerfile vm-deploy/statistics-service/
+          cp user-tracking-service/Dockerfile vm-deploy/user-tracking-service/
+          
           # Verify files were copied
-          echo "Verifying copied JAR files:"
+          echo "Verifying copied files:"
           ls -la vm-deploy/*/
+
+      - name: Debug environment variables
+        run: |
+          echo "Checking environment variables (with sensitive data masked):"
+          echo "ORACLE_VM_IP is set: ${{ secrets.VM_IP_ADDRESS != '' }}"
+          echo "DOCKER_REGISTRY is set: ${{ secrets.OCI_REGISTRY != '' }}"
+          echo "OCI_USERNAME is set: ${{ secrets.OCI_USERNAME != '' }}"
+          echo "OCI_AUTH_TOKEN is set: ${{ secrets.OCI_AUTH_TOKEN != '' }}"
 
       - name: Set up SSH key
         run: |
+          # Create directory and set permissions
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          
+          # Write the SSH key with proper error handling
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "ERROR: SSH_PRIVATE_KEY secret is not set!"
+            exit 1
+          fi
+          
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ${{ env.SSH_KEY_PATH }}
+          chmod 600 ${{ env.SSH_KEY_PATH }}
+          
+          # Verify the key was written correctly
+          if [ ! -f "${{ env.SSH_KEY_PATH }}" ]; then
+            echo "ERROR: Failed to create SSH key file!"
+            exit 1
+          fi
+          
+          # Verify permissions
+          ls -la ${{ env.SSH_KEY_PATH }}
+          
+          # Add VM to known hosts - verify VM_IP_ADDRESS is set
+          if [ -z "${{ secrets.VM_IP_ADDRESS }}" ]; then
+            echo "ERROR: VM_IP_ADDRESS secret is not set!"
+            exit 1
+          fi
+          
           ssh-keyscan -H ${{ secrets.VM_IP_ADDRESS }} >> ~/.ssh/known_hosts
+          
+          # Test SSH connection
+          echo "Testing SSH connection..."
+          ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "echo SSH connection successful"
 
       - name: Deploy to Oracle VM
-        env:
-          ORACLE_VM_IP: ${{ secrets.VM_IP_ADDRESS }}
-          DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
-          OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
-          OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
         run: |
-          # Verify VM connection
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa opc@${ORACLE_VM_IP} "echo VM connection verified"
-          
           # Create directories on VM
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa opc@${ORACLE_VM_IP} "mkdir -p ~/music-analytics/vm-deploy/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}"
+          ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "mkdir -p ~/music-analytics/vm-deploy/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}"
           
-          # Copy Dockerfiles and JAR files to VM
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa vm-deploy/eureka-server/Dockerfile vm-deploy/eureka-server/eureka-server.jar opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/eureka-server/
-          
-          # Repeat for other services...
-          # [Add similar scp commands for other services]
+          # Copy JAR files and Dockerfiles to VM
+          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/eureka-server/eureka-server.jar vm-deploy/eureka-server/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/eureka-server/
+          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/api-gateway/api-gateway.jar vm-deploy/api-gateway/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/api-gateway/
+          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/recommendation-service/recommendation-service.jar vm-deploy/recommendation-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/recommendation-service/
+          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/statistics-service/statistics-service.jar vm-deploy/statistics-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/statistics-service/
+          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/user-tracking-service/user-tracking-service.jar vm-deploy/user-tracking-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/user-tracking-service/
           
           # Copy docker-compose file
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${ORACLE_VM_IP}:~/music-analytics/vm-deploy/docker-compose.yml
+          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} cloud-deploy/docker-compose.direct.yml opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/docker-compose.yml
           
           # Build and run containers
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa opc@${ORACLE_VM_IP} "cd ~/music-analytics/vm-deploy && \
-            docker login ${DOCKER_REGISTRY} -u ${OCI_USERNAME} -p ${OCI_AUTH_TOKEN} && \
+          ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "cd ~/music-analytics/vm-deploy && \
+            echo 'Logging in to Docker registry...' && \
+            docker login ${{ env.DOCKER_REGISTRY }} -u ${{ env.OCI_USERNAME }} -p ${{ env.OCI_AUTH_TOKEN }} && \
+            echo 'Stopping existing containers...' && \
             docker-compose down --remove-orphans || true && \
+            echo 'Starting new containers...' && \
             docker-compose up -d && \
+            echo 'Container status:' && \
             docker-compose ps"
 
       # Debug command
       - name: Debug on failure
         if: failure()
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa opc@${ORACLE_VM_IP} '
-            echo "==== EUREKA SERVER LOGS ====" &&
-            docker logs vm-deploy-eureka-server-1 || echo "No logs available"
-          '
+          if [ -f "${{ env.SSH_KEY_PATH }}" ]; then
+            ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} '
+              echo "==== EUREKA SERVER LOGS ====" &&
+              docker logs $(docker ps -q -f name=eureka-server) || echo "No eureka-server logs available"
+            '
+          else
+            echo "SSH key file not found, cannot retrieve logs"
+          fi
