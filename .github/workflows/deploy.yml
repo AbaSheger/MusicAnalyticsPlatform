@@ -124,8 +124,12 @@ jobs:
 
       - name: Set up SSH key
         run: |
-          # Create directory and set permissions
-          mkdir -p ~/.ssh
+          # Create directory and set permissions with proper error handling
+          mkdir -p ~/.ssh || { echo "Failed to create ~/.ssh directory"; exit 1; }
+          chmod 700 ~/.ssh || { echo "Failed to set permissions on ~/.ssh"; exit 1; }
+          
+          # Debug directory permissions
+          ls -la ~ | grep .ssh
           
           # Write the SSH key with proper error handling
           if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
@@ -133,8 +137,17 @@ jobs:
             exit 1
           fi
           
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ${{ env.SSH_KEY_PATH }}
-          chmod 600 ${{ env.SSH_KEY_PATH }}
+          # Use tee command for more reliable file writing
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tee ${{ env.SSH_KEY_PATH }} > /dev/null || {
+            echo "ERROR: Failed to write SSH key file!"
+            exit 1
+          }
+          
+          # Set proper permissions on the key file
+          chmod 600 ${{ env.SSH_KEY_PATH }} || {
+            echo "ERROR: Failed to set permissions on SSH key file!"
+            exit 1
+          }
           
           # Verify the key was written correctly
           if [ ! -f "${{ env.SSH_KEY_PATH }}" ]; then
@@ -142,8 +155,9 @@ jobs:
             exit 1
           fi
           
-          # Verify permissions
+          # Verify permissions and file size
           ls -la ${{ env.SSH_KEY_PATH }}
+          wc -l ${{ env.SSH_KEY_PATH }} || echo "Could not count lines in key file"
           
           # Add VM to known hosts - verify VM_IP_ADDRESS is set
           if [ -z "${{ secrets.VM_IP_ADDRESS }}" ]; then
@@ -151,7 +165,10 @@ jobs:
             exit 1
           fi
           
-          ssh-keyscan -H ${{ secrets.VM_IP_ADDRESS }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.VM_IP_ADDRESS }} >> ~/.ssh/known_hosts || {
+            echo "ERROR: Failed to add VM to known hosts!"
+            exit 1
+          }
           
           # Test SSH connection
           echo "Testing SSH connection..."
