@@ -158,12 +158,47 @@ jobs:
           # Create the base directory on the remote VM
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "mkdir -p ~/music-analytics/vm-deploy"
           
-          # Recursively copy each service directory to the remote VM
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/eureka-server opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/eureka-server
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/api-gateway opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/api-gateway
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/recommendation-service opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/recommendation-service
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/statistics-service opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/statistics-service
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/user-tracking-service opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/user-tracking-service
+          # Recursively copy each service directory to the remote VM with the destination path quoted
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/eureka-server opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/eureka-server"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/api-gateway opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/api-gateway"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/recommendation-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/recommendation-service"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/statistics-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/statistics-service"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/user-tracking-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/user-tracking-service"
           
           # Copy the docker-compose file and environment file to the remote VM
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/docker-compose.yml"
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/.env opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/.env"
+          
+          # On the remote VM: log in to the Docker registry, build images for each service, adjust docker-compose, and deploy containers
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "cd ~/music-analytics/vm-deploy && \
+            echo 'Logging in to Docker registry...' && \
+            echo \"${{ secrets.OCI_AUTH_TOKEN }}\" | docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} --password-stdin && \
+            echo 'Stopping and removing existing containers if any...' && \
+            docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && \
+            echo 'Building Docker images locally...' && \
+            for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do \
+              docker build -t music-analytics/\$service ./\$service || exit 1; \
+            done && \
+            echo 'Fixing docker-compose file (removing version attribute)...' && \
+            sed -i '/^version:/d' docker-compose.yml && \
+            echo 'Starting new containers with docker-compose...' && \
+            docker-compose up -d && \
+            echo 'Container status:' && docker-compose ps"
+      
+      - name: Debug on failure
+        if: failure()
+        run: |
+          if [ -f "$HOME/.ssh/id_rsa" ]; then
+            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} '
+              echo "==== ENVIRONMENT VARIABLES ====" &&
+              env | grep DOCKER || echo "No Docker environment variables found" &&
+              echo "==== DOCKER-COMPOSE FILE CONTENT ====" &&
+              cat ~/music-analytics/vm-deploy/docker-compose.yml || echo "No docker-compose file found" &&
+              echo "==== EUREKA SERVER LOGS ====" &&
+              docker logs $(docker ps -q -f name=eureka-server) || echo "No eureka-server logs available" &&
+              echo "==== ALL CONTAINERS ====" &&
+              docker ps -a || echo "No containers found"
+            '
+          else
+            echo "SSH key file not found, cannot retrieve logs"
+          fi
