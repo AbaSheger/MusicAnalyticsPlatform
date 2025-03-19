@@ -171,6 +171,22 @@ jobs:
             exit 1
           }
 
+      # Prepare .env file for docker-compose
+      - name: Prepare environment file
+        run: |
+          # Create .env file with secrets for docker-compose
+          cat > vm-deploy/.env << EOF
+          DOCKER_REGISTRY=${{ secrets.OCI_REGISTRY }}
+          OCI_USERNAME=${{ secrets.OCI_USERNAME }}
+          OCI_AUTH_TOKEN=${{ secrets.OCI_AUTH_TOKEN }}
+          EOF
+          
+          # Show file (without sensitive data)
+          echo "Created .env file for docker-compose"
+          echo "DOCKER_REGISTRY is set: true"
+          echo "OCI_USERNAME is set: true" 
+          echo "OCI_AUTH_TOKEN is set: true"
+
       - name: Deploy to Oracle VM
         run: |
           # Create directories on VM
@@ -183,17 +199,23 @@ jobs:
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/statistics-service/statistics-service.jar vm-deploy/statistics-service/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/statistics-service/
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/user-tracking-service/user-tracking-service.jar vm-deploy/user-tracking-service/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/user-tracking-service/
           
-          # Copy docker-compose file
+          # Copy docker-compose file and .env file
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/docker-compose.yml
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/.env opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/.env
           
           # Build and run containers
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "cd ~/music-analytics/vm-deploy && \
             echo 'Logging in to Docker registry...' && \
-            docker login ${{ env.DOCKER_REGISTRY }} -u ${{ env.OCI_USERNAME }} -p ${{ env.OCI_AUTH_TOKEN }} && \
-            echo 'Stopping ALL existing containers...' && \
-            docker stop $(docker ps -q) || true && \
-            docker rm $(docker ps -aq) || true && \
+            docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} -p ${{ secrets.OCI_AUTH_TOKEN }} && \
+            echo 'Stopping existing containers if any...' && \
+            docker ps -q | xargs -r docker stop && \
+            docker ps -aq | xargs -r docker rm && \
             echo 'Starting new containers...' && \
+            echo 'DOCKER_REGISTRY=${{ secrets.OCI_REGISTRY }}' > .env && \
+            echo 'OCI_USERNAME=${{ secrets.OCI_USERNAME }}' >> .env && \
+            echo 'OCI_AUTH_TOKEN=${{ secrets.OCI_AUTH_TOKEN }}' >> .env && \
+            cat .env && \
+            export DOCKER_REGISTRY=${{ secrets.OCI_REGISTRY }} && \
             docker-compose up -d && \
             echo 'Container status:' && \
             docker-compose ps"
@@ -204,8 +226,14 @@ jobs:
         run: |
           if [ -f "$HOME/.ssh/id_rsa" ]; then
             ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} '
+              echo "==== ENVIRONMENT VARIABLES ====" &&
+              env | grep DOCKER || echo "No Docker environment variables found" &&
+              echo "==== DOCKER-COMPOSE FILE CONTENT ====" &&
+              cat ~/music-analytics/vm-deploy/docker-compose.yml || echo "No docker-compose file found" &&
               echo "==== EUREKA SERVER LOGS ====" &&
-              docker logs $(docker ps -q -f name=eureka-server) || echo "No eureka-server logs available"
+              docker logs $(docker ps -q -f name=eureka-server) || echo "No eureka-server logs available" &&
+              echo "==== ALL CONTAINERS ====" &&
+              docker ps -a || echo "No containers found"
             '
           else
             echo "SSH key file not found, cannot retrieve logs"
