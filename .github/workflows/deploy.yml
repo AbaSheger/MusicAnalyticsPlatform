@@ -122,14 +122,15 @@ jobs:
           echo "OCI_USERNAME is set: ${{ secrets.OCI_USERNAME != '' }}"
           echo "OCI_AUTH_TOKEN is set: ${{ secrets.OCI_AUTH_TOKEN != '' }}"
 
+      # Fixed SSH key setup step
       - name: Set up SSH key
         run: |
-          # Create directory and set permissions with proper error handling
-          mkdir -p ~/.ssh || { echo "Failed to create ~/.ssh directory"; exit 1; }
-          chmod 700 ~/.ssh || { echo "Failed to set permissions on ~/.ssh"; exit 1; }
+          # Create directory and set permissions
+          mkdir -p $HOME/.ssh
+          chmod 700 $HOME/.ssh
           
           # Debug directory permissions
-          ls -la ~ | grep .ssh
+          ls -la $HOME/.ssh || echo "Unable to list .ssh directory"
           
           # Check if the SSH key secret is set
           if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
@@ -137,61 +138,56 @@ jobs:
             exit 1
           fi
           
-          # Write SSH key file using direct redirection instead of tee
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ${{ env.SSH_KEY_PATH }}
-          
-          # Check if the file was created
-          if [ ! -f "${{ env.SSH_KEY_PATH }}" ]; then
-            echo "ERROR: Failed to create SSH key file!"
-            exit 1
-          fi
+          # Write SSH key file and check it was created
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
+          ls -la $HOME/.ssh/id_rsa || { echo "ERROR: Failed to create SSH key file!"; exit 1; }
           
           # Set proper permissions on the key file
-          chmod 600 ${{ env.SSH_KEY_PATH }} || {
-            echo "ERROR: Failed to set permissions on SSH key file!"
-            exit 1
-          }
+          chmod 600 $HOME/.ssh/id_rsa || { echo "ERROR: Failed to set permissions on SSH key file!"; exit 1; }
           
           # Verify file content (indirectly)
-          key_size=$(stat -c %s ${{ env.SSH_KEY_PATH }})
+          key_size=$(stat -c %s $HOME/.ssh/id_rsa)
           echo "SSH key file size: $key_size bytes"
           
-          if [ "$key_size" -lt 100 ]; then
-            echo "WARNING: SSH key file seems too small, may be invalid"
-          fi
-          
-          # Add VM to known hosts - verify VM_IP_ADDRESS is set
+          # Add VM to known hosts
           if [ -z "${{ secrets.VM_IP_ADDRESS }}" ]; then
             echo "ERROR: VM_IP_ADDRESS secret is not set!"
             exit 1
           fi
           
-          ssh-keyscan -H ${{ secrets.VM_IP_ADDRESS }} >> ~/.ssh/known_hosts || {
-            echo "ERROR: Failed to add VM to known hosts!"
+          # Initialize known_hosts file
+          touch $HOME/.ssh/known_hosts
+          
+          # Add VM to known hosts
+          ssh-keyscan -H ${{ secrets.VM_IP_ADDRESS }} >> $HOME/.ssh/known_hosts
+          
+          # Test SSH connection
+          echo "Testing SSH connection..."
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.VM_IP_ADDRESS }} "echo SSH connection successful" || {
+            echo "ERROR: SSH connection failed. Debugging information:"
+            ls -la $HOME/.ssh/
+            echo "Key file content (first line only):"
+            head -1 $HOME/.ssh/id_rsa
             exit 1
           }
-          
-          # Test SSH connection (with verbose mode for debugging)
-          echo "Testing SSH connection..."
-          ssh -v -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "echo SSH connection successful"
 
       - name: Deploy to Oracle VM
         run: |
           # Create directories on VM
-          ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "mkdir -p ~/music-analytics/vm-deploy/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}"
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.VM_IP_ADDRESS }} "mkdir -p ~/music-analytics/vm-deploy/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}"
           
           # Copy JAR files and Dockerfiles to VM
-          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/eureka-server/eureka-server.jar vm-deploy/eureka-server/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/eureka-server/
-          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/api-gateway/api-gateway.jar vm-deploy/api-gateway/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/api-gateway/
-          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/recommendation-service/recommendation-service.jar vm-deploy/recommendation-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/recommendation-service/
-          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/statistics-service/statistics-service.jar vm-deploy/statistics-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/statistics-service/
-          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} vm-deploy/user-tracking-service/user-tracking-service.jar vm-deploy/user-tracking-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/user-tracking-service/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/eureka-server/eureka-server.jar vm-deploy/eureka-server/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/eureka-server/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/api-gateway/api-gateway.jar vm-deploy/api-gateway/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/api-gateway/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/recommendation-service/recommendation-service.jar vm-deploy/recommendation-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/recommendation-service/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/statistics-service/statistics-service.jar vm-deploy/statistics-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/statistics-service/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/user-tracking-service/user-tracking-service.jar vm-deploy/user-tracking-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/user-tracking-service/
           
           # Copy docker-compose file
-          scp -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} cloud-deploy/docker-compose.direct.yml opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/docker-compose.yml
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/docker-compose.yml
           
           # Build and run containers
-          ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} "cd ~/music-analytics/vm-deploy && \
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.VM_IP_ADDRESS }} "cd ~/music-analytics/vm-deploy && \
             echo 'Logging in to Docker registry...' && \
             docker login ${{ env.DOCKER_REGISTRY }} -u ${{ env.OCI_USERNAME }} -p ${{ env.OCI_AUTH_TOKEN }} && \
             echo 'Stopping ALL existing containers...' && \
@@ -206,8 +202,8 @@ jobs:
       - name: Debug on failure
         if: failure()
         run: |
-          if [ -f "${{ env.SSH_KEY_PATH }}" ]; then
-            ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_KEY_PATH }} opc@${{ secrets.VM_IP_ADDRESS }} '
+          if [ -f "$HOME/.ssh/id_rsa" ]; then
+            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.VM_IP_ADDRESS }} '
               echo "==== EUREKA SERVER LOGS ====" &&
               docker logs $(docker ps -q -f name=eureka-server) || echo "No eureka-server logs available"
             '
