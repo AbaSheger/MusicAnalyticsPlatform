@@ -209,14 +209,15 @@ jobs:
             echo \"${{ secrets.OCI_AUTH_TOKEN }}\" | docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} --password-stdin && \
             echo 'Stopping and removing existing containers if any...' && \
             docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && \
+            echo 'Modifying docker-compose.yml to use local Dockerfiles...' && \
+            sed -i '/^version:/d' docker-compose.yml && \
+            sed -i 's|build:\\n      context: ./|build: ./|g' docker-compose.yml && \
             echo 'Building Docker images locally...' && \
             for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do \
               cd \$service && \
               docker build -t music-analytics/\$service . || exit 1; \
               cd .. ; \
             done && \
-            echo 'Fixing docker-compose file (removing version attribute)...' && \
-            sed -i '/^version:/d' docker-compose.yml && \
             echo 'Starting new containers with docker-compose...' && \
             docker-compose up -d && \
             echo 'Container status:' && docker-compose ps"
@@ -230,6 +231,12 @@ jobs:
               env | grep DOCKER || echo "No Docker environment variables found" &&
               echo "==== DOCKER-COMPOSE FILE CONTENT ====" &&
               cat ~/music-analytics/vm-deploy/docker-compose.yml || echo "No docker-compose file found" &&
+              echo "==== DIRECTORY CONTENT ====" &&
+              ls -la ~/music-analytics/vm-deploy/ &&
+              for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do
+                echo "==== $service DIRECTORY CONTENT ====" &&
+                ls -la ~/music-analytics/vm-deploy/$service/
+              done &&
               echo "==== EUREKA SERVER LOGS ====" &&
               docker logs $(docker ps -q -f name=eureka-server) || echo "No eureka-server logs available" &&
               echo "==== ALL CONTAINERS ====" &&
