@@ -9,7 +9,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      ORACLE_VM_IP: ${{ secrets.VM_IP_ADDRESS }}
+      ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}
       DOCKER_REGISTRY: ${{ secrets.OCI_REGISTRY }}
       OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
       OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}
@@ -117,7 +117,7 @@ jobs:
       - name: Debug environment variables
         run: |
           echo "Checking environment variables (with sensitive data masked):"
-          echo "ORACLE_VM_IP is set: ${{ secrets.VM_IP_ADDRESS != '' }}"
+          echo "ORACLE_VM_IP is set: ${{ secrets.ORACLE_VM_IP != '' }}"
           echo "DOCKER_REGISTRY is set: ${{ secrets.OCI_REGISTRY != '' }}"
           echo "OCI_USERNAME is set: ${{ secrets.OCI_USERNAME != '' }}"
           echo "OCI_AUTH_TOKEN is set: ${{ secrets.OCI_AUTH_TOKEN != '' }}"
@@ -150,8 +150,8 @@ jobs:
           echo "SSH key file size: $key_size bytes"
           
           # Add VM to known hosts
-          if [ -z "${{ secrets.VM_IP_ADDRESS }}" ]; then
-            echo "ERROR: VM_IP_ADDRESS secret is not set!"
+          if [ -z "${{ secrets.ORACLE_VM_IP }}" ]; then
+            echo "ERROR: ORACLE_VM_IP secret is not set!"
             exit 1
           fi
           
@@ -159,11 +159,11 @@ jobs:
           touch $HOME/.ssh/known_hosts
           
           # Add VM to known hosts
-          ssh-keyscan -H ${{ secrets.VM_IP_ADDRESS }} >> $HOME/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.ORACLE_VM_IP }} >> $HOME/.ssh/known_hosts
           
           # Test SSH connection
           echo "Testing SSH connection..."
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.VM_IP_ADDRESS }} "echo SSH connection successful" || {
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "echo SSH connection successful" || {
             echo "ERROR: SSH connection failed. Debugging information:"
             ls -la $HOME/.ssh/
             echo "Key file content (first line only):"
@@ -174,20 +174,20 @@ jobs:
       - name: Deploy to Oracle VM
         run: |
           # Create directories on VM
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.VM_IP_ADDRESS }} "mkdir -p ~/music-analytics/vm-deploy/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}"
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "mkdir -p ~/music-analytics/vm-deploy/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}"
           
           # Copy JAR files and Dockerfiles to VM
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/eureka-server/eureka-server.jar vm-deploy/eureka-server/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/eureka-server/
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/api-gateway/api-gateway.jar vm-deploy/api-gateway/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/api-gateway/
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/recommendation-service/recommendation-service.jar vm-deploy/recommendation-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/recommendation-service/
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/statistics-service/statistics-service.jar vm-deploy/statistics-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/statistics-service/
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/user-tracking-service/user-tracking-service.jar vm-deploy/user-tracking-service/Dockerfile opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/user-tracking-service/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/eureka-server/eureka-server.jar vm-deploy/eureka-server/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/eureka-server/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/api-gateway/api-gateway.jar vm-deploy/api-gateway/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/api-gateway/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/recommendation-service/recommendation-service.jar vm-deploy/recommendation-service/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/recommendation-service/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/statistics-service/statistics-service.jar vm-deploy/statistics-service/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/statistics-service/
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/user-tracking-service/user-tracking-service.jar vm-deploy/user-tracking-service/Dockerfile opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/user-tracking-service/
           
           # Copy docker-compose file
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${{ secrets.VM_IP_ADDRESS }}:~/music-analytics/vm-deploy/docker-compose.yml
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa cloud-deploy/docker-compose.direct.yml opc@${{ secrets.ORACLE_VM_IP }}:~/music-analytics/vm-deploy/docker-compose.yml
           
           # Build and run containers
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.VM_IP_ADDRESS }} "cd ~/music-analytics/vm-deploy && \
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "cd ~/music-analytics/vm-deploy && \
             echo 'Logging in to Docker registry...' && \
             docker login ${{ env.DOCKER_REGISTRY }} -u ${{ env.OCI_USERNAME }} -p ${{ env.OCI_AUTH_TOKEN }} && \
             echo 'Stopping ALL existing containers...' && \
@@ -203,7 +203,7 @@ jobs:
         if: failure()
         run: |
           if [ -f "$HOME/.ssh/id_rsa" ]; then
-            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.VM_IP_ADDRESS }} '
+            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} '
               echo "==== EUREKA SERVER LOGS ====" &&
               docker logs $(docker ps -q -f name=eureka-server) || echo "No eureka-server logs available"
             '
