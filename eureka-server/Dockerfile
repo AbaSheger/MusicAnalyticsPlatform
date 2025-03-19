@@ -1,20 +1,17 @@
-# First stage: Build the application
-FROM maven:3.8.5-openjdk-8-slim AS builder
-WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline
-COPY src ./src
-RUN mvn package -DskipTests
-# Set up Java runtime (if needed)
-RUN mkdir -p /javaruntime && \
-    cp -R $JAVA_HOME/* /javaruntime/
+# Use an official OpenJDK image to run the application
+FROM openjdk:8-jre-slim
 
-# Second stage: Create the runtime image
-FROM alpine:3.18
-RUN apk add --no-cache openjdk8-jre-base
+# Set the working directory inside the container
 WORKDIR /app
-ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
-COPY --from=builder /app/target/eureka-server-*.jar /app/app.jar
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Copy the pre-built JAR file into the container
+COPY target/eureka-server-1.0-SNAPSHOT.jar app.jar
+
+# Expose the port that the application will run on
 EXPOSE 8761
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+
+# Set the entry point to run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,16 +1,17 @@
-# Build stage - adjusted to use Java 8 for consistency with parent pom.xml
-FROM maven:3.8.5-openjdk-8-slim AS build
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-# List files to debug
-RUN ls -la target/
-
-# Runtime stage - changed from Java 17 to Java 8
+# Use an official OpenJDK image to run the application
 FROM openjdk:8-jre-slim
+
+# Set the working directory inside the container
 WORKDIR /app
+
+# Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-# Use specific JAR name instead of wildcard
-COPY --from=build /app/target/user-tracking-service-1.0-SNAPSHOT.jar ./app.jar
-CMD ["java", "-jar", "app.jar"]
+
+# Copy the pre-built JAR file into the container
+COPY target/user-tracking-service-1.0-SNAPSHOT.jar app.jar
+
+# Expose the port that the application will run on
+EXPOSE 8084
+
+# Set the entry point to run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
