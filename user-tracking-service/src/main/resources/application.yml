@@ -36,6 +36,9 @@ eureka:
   instance:
     prefer-ip-address: true
 
+security:
+  enabled: false
+
 # Docker profile
 ---
 spring:

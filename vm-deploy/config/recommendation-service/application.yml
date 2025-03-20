@@ -16,6 +16,7 @@ eureka:
     hostname: recommendation-service
     leaseRenewalIntervalInSeconds: 10
     leaseExpirationDurationInSeconds: 20
+    instanceId: ${spring.application.name}:${server.port}
 
 management:
   endpoints:

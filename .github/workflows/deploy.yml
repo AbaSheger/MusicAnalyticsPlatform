@@ -85,11 +85,8 @@ jobs:
       - name: Prepare Docker build context
         run: |
           # Create directories under vm-deploy for each service
-          mkdir -p vm-deploy/eureka-server \
-                   vm-deploy/api-gateway \
-                   vm-deploy/recommendation-service \
-                   vm-deploy/statistics-service \
-                   vm-deploy/user-tracking-service
+          mkdir -p vm-deploy/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}
+          mkdir -p vm-deploy/config/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}
           
           # Copy the pre-built JAR files directly into the vm-deploy directories with simplified names
           cp $(find eureka-server/target -type f -name "eureka-server*.jar" | grep -v original) vm-deploy/eureka-server/eureka-server.jar
@@ -97,6 +94,9 @@ jobs:
           cp $(find recommendation-service/target -type f -name "recommendation-service*.jar" | grep -v original) vm-deploy/recommendation-service/recommendation-service.jar
           cp $(find statistics-service/target -type f -name "statistics-service*.jar" | grep -v original) vm-deploy/statistics-service/statistics-service.jar
           cp $(find user-tracking-service/target -type f -name "user-tracking-service*.jar" | grep -v original) vm-deploy/user-tracking-service/user-tracking-service.jar
+          
+          # Copy configuration files
+          cp -r vm-deploy/config/* vm-deploy/config/
           
           # Use the simplified Dockerfiles in the vm-deploy directories
           cat > vm-deploy/eureka-server/Dockerfile << 'EOF'
@@ -139,8 +139,109 @@ jobs:
           ENTRYPOINT ["java", "-jar", "app.jar"]
           EOF
           
+          # Create application.yml configuration files for each service
+          cat > vm-deploy/config/eureka-server/application.yml << 'EOF'
+          server:
+            port: 8761
+          spring:
+            application:
+              name: eureka-server
+          eureka:
+            client:
+              registerWithEureka: false
+              fetchRegistry: false
+              serviceUrl:
+                defaultZone: http://eureka-server:8761/eureka/
+            server:
+              enableSelfPreservation: false
+              waitTimeInMsWhenSyncEmpty: 0
+            instance:
+              hostname: eureka-server
+          EOF
+          
+          cat > vm-deploy/config/api-gateway/application.yml << 'EOF'
+          server:
+            port: 8080
+          spring:
+            application:
+              name: api-gateway
+          eureka:
+            client:
+              registerWithEureka: true
+              fetchRegistry: true
+              serviceUrl:
+                defaultZone: http://eureka-server:8761/eureka/
+            instance:
+              preferIpAddress: true
+              hostname: api-gateway
+              leaseRenewalIntervalInSeconds: 10
+              leaseExpirationDurationInSeconds: 20
+              instanceId: ${spring.application.name}:${server.port}
+          EOF
+          
+          cat > vm-deploy/config/recommendation-service/application.yml << 'EOF'
+          server:
+            port: 8082
+          spring:
+            application:
+              name: recommendation-service
+          eureka:
+            client:
+              registerWithEureka: true
+              fetchRegistry: true
+              serviceUrl:
+                defaultZone: http://eureka-server:8761/eureka/
+            instance:
+              preferIpAddress: true
+              hostname: recommendation-service
+              leaseRenewalIntervalInSeconds: 10
+              leaseExpirationDurationInSeconds: 20
+              instanceId: ${spring.application.name}:${server.port}
+          EOF
+          
+          cat > vm-deploy/config/statistics-service/application.yml << 'EOF'
+          server:
+            port: 8083
+          spring:
+            application:
+              name: statistics-service
+          eureka:
+            client:
+              registerWithEureka: true
+              fetchRegistry: true
+              serviceUrl:
+                defaultZone: http://eureka-server:8761/eureka/
+            instance:
+              preferIpAddress: true
+              hostname: statistics-service
+              leaseRenewalIntervalInSeconds: 10
+              leaseExpirationDurationInSeconds: 20
+              instanceId: ${spring.application.name}:${server.port}
+          EOF
+          
+          cat > vm-deploy/config/user-tracking-service/application.yml << 'EOF'
+          server:
+            port: 8084
+          spring:
+            application:
+              name: user-tracking-service
+          eureka:
+            client:
+              registerWithEureka: true
+              fetchRegistry: true
+              serviceUrl:
+                defaultZone: http://eureka-server:8761/eureka/
+            instance:
+              preferIpAddress: true
+              hostname: user-tracking-service
+              leaseRenewalIntervalInSeconds: 10
+              leaseExpirationDurationInSeconds: 20
+              instanceId: ${spring.application.name}:${server.port}
+          EOF
+          
           echo "Verifying copied files:"
           ls -la vm-deploy/*/
+          ls -la vm-deploy/config/*/
 
       - name: Debug environment variables
         run: |
@@ -190,115 +291,171 @@ jobs:
       - name: Deploy to Oracle VM
         run: |
           # Create the base directory on the remote VM
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "mkdir -p ~/music-analytics/vm-deploy"
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa opc@${{ secrets.ORACLE_VM_IP }} "mkdir -p ~/music-analytics/vm-deploy ~/music-analytics/vm-deploy/config/{eureka-server,api-gateway,recommendation-service,statistics-service,user-tracking-service}"
           
           # Create a new docker-compose.yml file locally
           cat > vm-deploy/docker-compose.yml << 'EOF'
           version: '3.8'
 
+          networks:
+            music-analytics-network:
+              driver: bridge
+
           services:
             eureka-server:
               build: ./eureka-server
+              container_name: eureka-server
+              hostname: eureka-server
               ports:
                 - "8761:8761"
+              networks:
+                - music-analytics-network
+              volumes:
+                - ./config/eureka-server:/config
               environment:
-                - SPRING_PROFILES_ACTIVE=docker
-                - SERVER_PORT=8761
-              restart: unless-stopped
+                - SPRING_CONFIG_LOCATION=file:/config/application.yml
+                - SPRING_APPLICATION_NAME=eureka-server
+                - EUREKA_INSTANCE_HOSTNAME=eureka-server
+                - EUREKA_CLIENT_REGISTERWITHEUREKASERVER=false
+                - EUREKA_CLIENT_FETCHREGISTRY=false
+                - EUREKA_SERVER_ENABLESELFREPLICATION=false
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - EUREKA_INSTANCE_INSTANCE_ID=eureka-server:8761
+                - EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS=10
+                - EUREKA_INSTANCE_LEASE_EXPIRATION_DURATION_IN_SECONDS=20
               healthcheck:
-                test: ["CMD", "wget", "-q", "--spider", "http://localhost:8761/actuator/health"]
+                test: ["CMD", "curl", "-f", "http://eureka-server:8761/actuator/health"]
                 interval: 30s
                 timeout: 10s
-                retries: 5
-                start_period: 120s
+                retries: 3
 
             api-gateway:
               build: ./api-gateway
+              container_name: api-gateway
+              hostname: api-gateway
               ports:
                 - "8080:8080"
-              environment:
-                - SPRING_PROFILES_ACTIVE=production
-                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-                - ORACLE_EXTERNAL_HOSTNAME=${ORACLE_EXTERNAL_HOSTNAME}
-                - RENDER_EXTERNAL_HOSTNAME=disabled
-                - CORS_ALLOWED_ORIGINS=https://musicanalytics.netlify.app,https://music-analytics.abenezeranglo.uk
-                - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
+              networks:
+                - music-analytics-network
+              volumes:
+                - ./config/api-gateway:/config
               depends_on:
                 eureka-server:
                   condition: service_healthy
-              restart: unless-stopped
+              environment:
+                - SPRING_CONFIG_LOCATION=file:/config/application.yml
+                - SPRING_APPLICATION_NAME=api-gateway
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - EUREKA_INSTANCE_PREFERIPADDRESS=true
+                - SPRING_CLOUD_DISCOVERY_ENABLED=true
+                - SPRING_CLOUD_SERVICE_REGISTRY_AUTO_REGISTRATION_ENABLED=true
+                - EUREKA_INSTANCE_INSTANCE_ID=api-gateway:8080
+                - EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS=10
+                - EUREKA_INSTANCE_LEASE_EXPIRATION_DURATION_IN_SECONDS=20
+                - EUREKA_CLIENT_REGISTER_WITH_EUREKA=true
+                - EUREKA_CLIENT_FETCH_REGISTRY=true
+                - CORS_ALLOWED_ORIGINS=https://musicanalytics.netlify.app,https://music-analytics.abenezeranglo.uk
               healthcheck:
-                test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+                test: ["CMD", "curl", "-f", "http://api-gateway:8080/actuator/health"]
                 interval: 30s
                 timeout: 10s
                 retries: 3
-                start_period: 60s
 
             recommendation-service:
               build: ./recommendation-service
+              container_name: recommendation-service
+              hostname: recommendation-service
               ports:
                 - "8082:8082"
-              environment:
-                - SPRING_PROFILES_ACTIVE=production
-                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-                - RENDER_EXTERNAL_HOSTNAME=disabled
-                - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
+              networks:
+                - music-analytics-network
+              volumes:
+                - ./config/recommendation-service:/config
+                - recommendation-data:/data
               depends_on:
                 eureka-server:
                   condition: service_healthy
-              volumes:
-                - recommendation-data:/data
-              restart: unless-stopped
+              environment:
+                - SPRING_CONFIG_LOCATION=file:/config/application.yml
+                - SPRING_APPLICATION_NAME=recommendation-service
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - EUREKA_INSTANCE_PREFERIPADDRESS=true
+                - SPRING_CLOUD_DISCOVERY_ENABLED=true
+                - SPRING_CLOUD_SERVICE_REGISTRY_AUTO_REGISTRATION_ENABLED=true
+                - EUREKA_INSTANCE_INSTANCE_ID=recommendation-service:8082
+                - EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS=10
+                - EUREKA_INSTANCE_LEASE_EXPIRATION_DURATION_IN_SECONDS=20
+                - EUREKA_CLIENT_REGISTER_WITH_EUREKA=true
+                - EUREKA_CLIENT_FETCH_REGISTRY=true
               healthcheck:
-                test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1"]
+                test: ["CMD", "curl", "-f", "http://recommendation-service:8082/actuator/health"]
                 interval: 30s
                 timeout: 10s
                 retries: 3
-                start_period: 60s
 
             statistics-service:
               build: ./statistics-service
+              container_name: statistics-service
+              hostname: statistics-service
               ports:
                 - "8083:8083"
-              environment:
-                - SPRING_PROFILES_ACTIVE=production
-                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-                - RENDER_EXTERNAL_HOSTNAME=disabled
-                - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
+              networks:
+                - music-analytics-network
+              volumes:
+                - ./config/statistics-service:/config
+                - statistics-data:/data
               depends_on:
                 eureka-server:
                   condition: service_healthy
-              volumes:
-                - statistics-data:/data
-              restart: unless-stopped
+              environment:
+                - SPRING_CONFIG_LOCATION=file:/config/application.yml
+                - SPRING_APPLICATION_NAME=statistics-service
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - EUREKA_INSTANCE_PREFERIPADDRESS=true
+                - SPRING_CLOUD_DISCOVERY_ENABLED=true
+                - SPRING_CLOUD_SERVICE_REGISTRY_AUTO_REGISTRATION_ENABLED=true
+                - EUREKA_INSTANCE_INSTANCE_ID=statistics-service:8083
+                - EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS=10
+                - EUREKA_INSTANCE_LEASE_EXPIRATION_DURATION_IN_SECONDS=20
+                - EUREKA_CLIENT_REGISTER_WITH_EUREKA=true
+                - EUREKA_CLIENT_FETCH_REGISTRY=true
               healthcheck:
-                test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1"]
+                test: ["CMD", "curl", "-f", "http://statistics-service:8083/actuator/health"]
                 interval: 30s
                 timeout: 10s
                 retries: 3
-                start_period: 60s
 
             user-tracking-service:
               build: ./user-tracking-service
+              container_name: user-tracking-service
+              hostname: user-tracking-service
               ports:
                 - "8084:8084"
-              environment:
-                - SPRING_PROFILES_ACTIVE=production
-                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-                - RENDER_EXTERNAL_HOSTNAME=disabled
-                - SPRING_CLOUD_SERVICE-REGISTRY_AUTO-REGISTRATION_ENABLED=false
+              networks:
+                - music-analytics-network
+              volumes:
+                - ./config/user-tracking-service:/config
+                - user-tracking-data:/data
               depends_on:
                 eureka-server:
                   condition: service_healthy
-              volumes:
-                - user-tracking-data:/data
-              restart: unless-stopped
+              environment:
+                - SPRING_CONFIG_LOCATION=file:/config/application.yml
+                - SPRING_APPLICATION_NAME=user-tracking-service
+                - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                - EUREKA_INSTANCE_PREFERIPADDRESS=true
+                - SPRING_CLOUD_DISCOVERY_ENABLED=true
+                - SPRING_CLOUD_SERVICE_REGISTRY_AUTO_REGISTRATION_ENABLED=true
+                - EUREKA_INSTANCE_INSTANCE_ID=user-tracking-service:8084
+                - EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS=10
+                - EUREKA_INSTANCE_LEASE_EXPIRATION_DURATION_IN_SECONDS=20
+                - EUREKA_CLIENT_REGISTER_WITH_EUREKA=true
+                - EUREKA_CLIENT_FETCH_REGISTRY=true
               healthcheck:
-                test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1"]
+                test: ["CMD", "curl", "-f", "http://user-tracking-service:8084/actuator/health"]
                 interval: 30s
                 timeout: 10s
                 retries: 3
-                start_period: 60s
 
           volumes:
             recommendation-data:
@@ -313,6 +470,9 @@ jobs:
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/statistics-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/"
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/user-tracking-service opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/"
           
+          # Copy the configuration files to the remote VM
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -r vm-deploy/config/* opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/config/"
+          
           # Copy the docker-compose file and environment file to the remote VM
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/docker-compose.yml opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/docker-compose.yml"
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa vm-deploy/.env opc@${{ secrets.ORACLE_VM_IP }}:"~/music-analytics/vm-deploy/.env"
@@ -322,13 +482,17 @@ jobs:
             echo 'Logging in to Docker registry...' && \
             echo \"${{ secrets.OCI_AUTH_TOKEN }}\" | docker login ${{ secrets.OCI_REGISTRY }} -u ${{ secrets.OCI_USERNAME }} --password-stdin && \
             echo 'Stopping and removing existing containers if any...' && \
-            docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && \
+            docker-compose down || true && \
             echo 'Building Docker images locally...' && \
             docker-compose build --no-cache && \
             echo 'Starting new containers with docker-compose...' && \
             docker-compose up -d && \
-            echo 'Container status:' && docker-compose ps"
-      
+            echo 'Container status:' && docker-compose ps && \
+            echo 'Waiting 60 seconds for containers to initialize...' && \
+            sleep 60 && \
+            echo 'Checking Eureka registration status:' && \
+            docker exec vm-deploy-api-gateway-1 curl -s http://eureka-server:8761/eureka/apps | grep -A 3 '<app>' || echo 'No services registered yet'"
+
       - name: Debug on failure
         if: failure()
         run: |
@@ -338,6 +502,11 @@ jobs:
               env | grep DOCKER || echo "No Docker environment variables found" &&
               echo "==== DOCKER-COMPOSE FILE CONTENT ====" &&
               cat ~/music-analytics/vm-deploy/docker-compose.yml || echo "No docker-compose file found" &&
+              echo "==== CONFIG FILES ====" &&
+              for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do
+                echo "==== $service CONFIG CONTENT ====" &&
+                cat ~/music-analytics/vm-deploy/config/$service/application.yml || echo "No config file found for $service"
+              done &&
               echo "==== DIRECTORY CONTENT ====" &&
               ls -la ~/music-analytics/vm-deploy/ &&
               for service in eureka-server api-gateway recommendation-service statistics-service user-tracking-service; do
@@ -346,6 +515,8 @@ jobs:
               done &&
               echo "==== EUREKA SERVER LOGS ====" &&
               docker logs $(docker ps -q -f name=eureka-server) || echo "No eureka-server logs available" &&
+              echo "==== API GATEWAY LOGS ====" &&
+              docker logs $(docker ps -q -f name=api-gateway) || echo "No api-gateway logs available" &&
               echo "==== ALL CONTAINERS ====" &&
               docker ps -a || echo "No containers found"
             '

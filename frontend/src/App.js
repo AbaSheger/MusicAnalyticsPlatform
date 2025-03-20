@@ -4,6 +4,7 @@ import Recommendation from './components/Recommendation';
 import Statistics from './components/Statistics';
 import UserTracking from './components/UserTracking';
 import TrackingHistory from './components/TrackingHistory';
+import SystemStatus from './components/SystemStatus';
 import api from './api';  // Import the api module
 
 // Get the API_BASE_URL from process.env or default to your VM IP
@@ -38,6 +39,11 @@ function NavLink({ to, children }) {
             <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7zm1-7.41V8c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .28.11.53.29.71l3 3c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L13 11.59z" />
           </svg>
         )}
+        {to === '/status' && (
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-4h2v2h-2zm0-2h2V7h-2z" />
+          </svg>
+        )}
         <span>{children}</span>
       </Link>
     </li>
@@ -60,6 +66,7 @@ function App() {
             <NavLink to="/statistics">Top Tracks</NavLink>
             <NavLink to="/user-tracking">Add Track</NavLink>
             <NavLink to="/history">History</NavLink>
+            <NavLink to="/status">System Status</NavLink>
           </ul>
         </nav>
         <main>
@@ -68,6 +75,7 @@ function App() {
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/user-tracking" element={<UserTracking />} />
             <Route path="/history" element={<TrackingHistory />} />
+            <Route path="/status" element={<SystemStatus />} />
             <Route path="/" element={<Recommendation />} />
           </Routes>
         </main>

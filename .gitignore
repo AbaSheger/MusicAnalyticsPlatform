@@ -4,6 +4,9 @@ target/
 *.war
 *.ear
 *.class
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
 # Eclipse files
 .classpath
@@ -22,6 +25,8 @@ target/
 # Environment files with sensitive information
 .env
 .env.*
+.env.local
+.env.*.local
 !.env.template
 set_oracle_env.bat
 *.pem
@@ -43,6 +48,10 @@ set_oracle_env.bat
 vm-deploy/
 # Only include specifically vetted files
 !vm-deploy/eureka-server/Dockerfile
+# Ignore vm-deploy directory except config
+vm-deploy/*
+!vm-deploy/config/
+!vm-deploy/docker-compose.yml
 
 # Logs
 logs/
